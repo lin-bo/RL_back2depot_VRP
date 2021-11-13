@@ -22,6 +22,15 @@ def make_instance(args):
     return instance
 
 class VRPDataset(Dataset):
+    """
+    This class is VRP Dataset
+
+    Args:
+        size (int): number of nodes in graph
+        mode (str): dataset mode
+        num_samples (int): number of instances
+        seed (int): random seed
+    """
 
     def __init__(self, size=50, mode="test", num_samples=1000000, seed=1234):
         # check mode
