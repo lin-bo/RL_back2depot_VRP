@@ -35,3 +35,4 @@ data/op/op_const20_validation_seed4321.pkl
 data/op/op_const20_test_seed1234.pkl
 data/op/op_const100_validation_seed4321.pkl
 data/op/op_const100_test_seed1234.pkl
+*.pyc
