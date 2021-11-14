@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-Randomize sweep heuristic algorithm
+Randomized sweep heuristic algorithm
 https://www.jstor.org/stable/3007888
 """
 
