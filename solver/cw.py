@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-# Author: Bo Tang
+# Author: Bo Lin
 """
 Randomize sweep heuristic algorithm
 https://www.jstor.org/stable/3007888
@@ -20,7 +20,7 @@ class cwHeuristic(ABSolver):
         loc (array): coordinates of customers
         demand (array): demands of customers
     """
-    
+
     def solve(self, R=5, M=5):
         """
         A method to solve model
