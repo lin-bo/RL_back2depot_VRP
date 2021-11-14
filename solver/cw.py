@@ -2,8 +2,8 @@
 # coding: utf-8
 # Author: Bo Lin
 """
-Randomize sweep heuristic algorithm
-https://www.jstor.org/stable/3007888
+Randomized Clarke-Wright Savings Heuristic algorithm
+https://www.jstor.org/stable/167703
 """
 
 import numpy as np
@@ -13,7 +13,7 @@ from solver.absolver import ABSolver
 
 class cwHeuristic(ABSolver):
     """
-    This is an class for CW heuristic solver
+    This is an class for Clarke-Wright heuristic solver
 
     Args:
         depot (array): coordinate of central depot
@@ -33,7 +33,7 @@ class cwHeuristic(ABSolver):
             tuple: best route (list[list]), objective value of best route (float)
         """
         # calculate distances
-        d2c, c2c = self._cal_distance()
+        d2c, c2c = self._calDistance()
         # calculate the saving matrix
         S = d2c.reshape((-1, 1)) + d2c.reshape((1, -1)) - c2c
         # set best sol recorders
@@ -42,22 +42,22 @@ class cwHeuristic(ABSolver):
         # lets solve it
         for r in range(1, R + 1):
             for m in range(M):
-                routes = self._routes_init()
+                routes = self._routesInit()
                 while True:
-                    MS = self._cal_saving(S, routes)
+                    MS = self._calSaving(S, routes)
                     if (MS > 0).sum() == 0:
                         break
-                    mergers = self._top_mergers(MS, r)
+                    mergers = self._topMergers(MS, r)
                     routes = self._merge(routes.copy(), mergers)
 
-                obj = self._cal_obj(routes, d2c, c2c)
+                obj = self._calObj(routes, d2c, c2c)
                 if obj < best_obj:
                     best_obj = obj
                     best_routes = routes.copy()
         return best_routes, best_obj
 
 
-    def _cal_distance(self):
+    def _calDistance(self):
         """
         A method to calculate the d2c distances and c2c distances, organized as arrays
         """
@@ -70,17 +70,14 @@ class cwHeuristic(ABSolver):
         return d2c, c2c
 
 
-    def _routes_init(self):
+    def _routesInit(self):
         """
         A method to initialize the solution (each customer is placed in a different route)
-
-        Returns:
-            list: a list n route
         """
         return [[i] for i in range(self.loc.shape[0])]
 
 
-    def _cal_saving(self, S, routes):
+    def _calSaving(self, S, routes):
         """
         A method to calculate the pair-wise merge saving for the given routes
         """
@@ -95,7 +92,10 @@ class cwHeuristic(ABSolver):
         return MS
 
 
-    def _top_mergers(self, M, r):
+    def _topMergers(self, M, r):
+        """
+        A method to find top mergers
+        """
         M_flat = M.flatten()
         n = M.shape[0]
         indices = np.argpartition(M_flat, n ** 2 - r)[-r:]
@@ -104,6 +104,9 @@ class cwHeuristic(ABSolver):
 
 
     def _merge(self, routes, mergers):
+        """
+        A method to combine the associated routes
+        """
         idx = np.random.randint(mergers.shape[0])
         i, j = mergers[idx]
         r1 = routes.pop(i)
@@ -112,7 +115,10 @@ class cwHeuristic(ABSolver):
         return routes
 
 
-    def _cal_obj(self, routes, d2c, c2c):
+    def _calObj(self, routes, d2c, c2c):
+        """
+        A method to calculate objective value
+        """
         obj = 0
         for route in routes:
             obj += d2c[route[0]]
