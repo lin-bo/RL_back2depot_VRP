@@ -36,8 +36,8 @@ class sweepHeuristic(ABSolver):
         # compute angle
         rel_loc = self.loc - self.depot
         rad = np.arctan2(rel_loc[:,1], rel_loc[:,0])
-        deg = (np.rad2deg(rad).astype(np.int8) + 180) % 360 - 180
-        assert np.abs(deg - np.rad2deg(rad).astype(np.int8)).sum() == 0
+        deg = (np.rad2deg(rad).astype(int) + 180) % 360 - 180
+        #assert np.abs(deg - np.rad2deg(rad).astype(np.int8)).sum() == 0
         # random initial angles
         best_routes = None
         best_obj = float("inf")
