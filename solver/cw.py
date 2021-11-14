@@ -129,36 +129,3 @@ class cwHeuristic(ABSolver):
             print(self.demand[route].sum())
 
         return best_routes, best_obj
-
-
-if __name__ == '__main__':
-
-    from prob import VRPDataset
-    from utils import routesPlot
-    from solver import sweepHeuristic
-
-    data = VRPDataset(num_samples=10000)
-
-    cnt = 0
-    for ins in data:
-        # get info
-        depot = ins["depot"].detach().numpy()
-        loc = ins["loc"].detach().numpy()
-        demand = ins["demand"].detach().numpy()
-        # run cw
-        solver = cwHeuristic(depot, loc, demand)
-        routes, obj = solver.solve()
-        # print results
-        print("CW Obj Val: {:.4f}".format(obj))
-
-        # run sweep
-        solver = sweepHeuristic(depot, loc, demand)
-        routes, obj = solver.solve()
-        # print results
-        print("SW Obj Val: {:.4f}".format(obj))
-
-        # stop
-        if cnt >= 1:
-            break
-        cnt += 1
-        print()
