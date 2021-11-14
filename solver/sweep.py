@@ -32,6 +32,9 @@ class sweepHeuristic(ABSolver):
 
         Args:
             rand_iter (int): number of Randomization
+
+        Returns:
+            tuple: best route (list[list]), objective value of best route (float)
         """
         # compute angle
         rel_loc = self.loc - self.depot
