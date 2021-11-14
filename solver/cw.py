@@ -126,5 +126,3 @@ class cwHeuristic(ABSolver):
                     best_routes = routes.copy()
 
         return best_routes, best_obj
-
-
