@@ -18,7 +18,7 @@ from solver.absolver import ABSolver
 
 class sweepHeuristic(ABSolver):
     """
-    This is an class for sweep heuristic solver
+    This is a class for sweep heuristic solver
 
     Args:
         depot (array): coordinate of central depot
