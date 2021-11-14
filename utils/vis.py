@@ -21,7 +21,10 @@ def routesPlot(routes, depot, loc):
     cmap = cm.get_cmap("viridis")
     colors = cmap(np.linspace(0, 1, len(routes)))
     # figure size
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(8, 8))
+    # axis range
+    plt.xlim([0, 1])
+    plt.ylim([0, 1])
     # coordinates of routes
     for i, r in enumerate(routes):
         x, y = [depot[0]], [depot[1]]
