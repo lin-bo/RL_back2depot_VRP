@@ -125,7 +125,6 @@ class cwHeuristic(ABSolver):
                     best_obj = obj
                     best_routes = routes.copy()
 
-        for route in routes:
-            print(self.demand[route].sum())
-
         return best_routes, best_obj
+
+
