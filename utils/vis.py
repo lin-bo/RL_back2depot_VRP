@@ -25,6 +25,13 @@ def routesPlot(routes, depot, loc):
     # axis range
     plt.xlim([0, 1])
     plt.ylim([0, 1])
+    # annotate deg
+    #rel_loc = loc - depot
+    #rad = np.arctan2(rel_loc[:,1], rel_loc[:,0])
+    #deg = (np.rad2deg(rad).astype(int) + 180) % 360 - 180
+    #for r in routes:
+    #    for v in r:
+    #        plt.annotate(deg[v], loc[v])
     # coordinates of routes
     for i, r in enumerate(routes):
         x, y = [depot[0]], [depot[1]]
