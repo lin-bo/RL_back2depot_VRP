@@ -98,6 +98,9 @@ class sweepHeuristic(ABSolver):
         loc = self._getLoc(cluster)
         # distance matrix
         dist = distance.cdist(loc, loc, "euclidean")
+        # only one customer
+        if len(cluster) == 1:
+            return cluster, dist[0,0]
         # build model
         tsp_model, x = self._buildTSPModel(dist)
         # solve
