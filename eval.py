@@ -10,6 +10,7 @@ import os
 import time
 
 import pandas as pd
+from tqdm import tqdm
 
 from prob import VRPDataset
 from solver import cwHeuristic, sweepHeuristic
@@ -49,7 +50,7 @@ def eval(algo, solver_args):
     df = pd.DataFrame(columns=["Obj", "Routes", "Vehicles", "Elapsed"])
     # run
     print("Run solver...")
-    for ins in data:
+    for ins in tqdm(data):
         # get info
         depot = ins["depot"].detach().numpy()
         loc = ins["loc"].detach().numpy()
