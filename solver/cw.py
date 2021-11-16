@@ -2,7 +2,7 @@
 # coding: utf-8
 # Author: Bo Lin
 """
-Randomized Clarke-Wright Savings Heuristic algorithm
+Randomized Clarke-Wright savings heuristic algorithm
 https://www.jstor.org/stable/167703
 """
 
