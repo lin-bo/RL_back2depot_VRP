@@ -16,17 +16,19 @@ from prob import VRPDataset
 from solver import cwHeuristic, sweepHeuristic
 from utils import routesPlot, checkValid
 
-def eval(algo, solver_args):
+def eval(size, algo, solver_args):
     """
     A function to evaluate different algorithms
 
     Args:
+        size(int): graph size
         algo (str): name of algorithm
         solver_args (tuple): args of solver
     """
     # load test data
     print("Load data...")
-    data = VRPDataset(num_samples=10000)
+    print("Graph size: {}".format(size))
+    data = VRPDataset(size=size, num_samples=10000)
     print()
     # select solver
     print("Select solver:")
@@ -43,7 +45,7 @@ def eval(algo, solver_args):
     print()
     # create table
     path = "./res"
-    file = algo + "-" + "_".join(map(str, solver_args)) + ".csv"
+    file = "n{}-".format(size) + algo + "-" + "_".join(map(str, solver_args)) + ".csv"
     if not os.path.isdir(path):
         os.mkdir(path)
     print("Save result to " + path + "/" + file)
@@ -75,6 +77,10 @@ if __name__ == "__main__":
     # init parser
     parser = argparse.ArgumentParser()
     # configuration
+    parser.add_argument("--size",
+                        type=int,
+                        choices=[20, 50, 100],
+                        help="graph size")
     parser.add_argument("--algo",
                         type=str,
                         choices=["cw", "sw"],
@@ -87,4 +93,4 @@ if __name__ == "__main__":
     # get configuration
     config = parser.parse_args()
     # run
-    eval(config.algo, config.args)
+    eval(config.size, config.algo, config.args)
