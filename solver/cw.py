@@ -97,6 +97,7 @@ class cwHeuristic(ABSolver):
         """
         M_flat = M.flatten()
         n = M.shape[0]
+        r = np.min([n**2 - 1, r])
         indices = np.argpartition(M_flat, n ** 2 - r)[-r:]
         indices = [idx for idx in indices if M_flat[idx] > 0]
         return np.array([[int(idx//n), int(idx % n)] for idx in indices])
