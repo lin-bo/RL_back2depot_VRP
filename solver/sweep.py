@@ -89,7 +89,7 @@ class sweepHeuristic(ABSolver):
             # check euqality
             v_cand = set(np.where(deg == angle)[0]).intersection(nodes)
             if v_cand:
-                return list(v_cand)[0]
+                return v_cand.pop()
             angle = ((angle + 1) + 180) % 360 - 180
 
 
