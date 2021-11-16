@@ -21,13 +21,13 @@ class cwHeuristic(ABSolver):
         demand (array): demands of customers
     """
 
-    def solve(self, R=5, M=5):
+    def solve(self, rand_depth=5, rand_iter=5):
         """
         A method to solve model
 
         Args:
-            R (int): the number of merger we consider each iteration
-            M (int): the number of times we repeat for each r
+            rand_depth (int): the number of merger we consider each iteration
+            rand_iter (int): the number of times we repeat for each r
 
         Returns:
             tuple: best route (list[list]), objective value of best route (float)
@@ -40,8 +40,8 @@ class cwHeuristic(ABSolver):
         best_obj = 1e5
         best_routes = []
         # lets solve it
-        for r in range(1, R + 1):
-            for m in range(M):
+        for r in range(1, rand_depth + 1):
+            for m in range(rand_iter):
                 routes = self._routesInit()
                 while True:
                     MS = self._calSaving(S, routes)
@@ -49,7 +49,6 @@ class cwHeuristic(ABSolver):
                         break
                     mergers = self._topMergers(MS, r)
                     routes = self._merge(routes.copy(), mergers)
-
                 obj = self._calObj(routes, d2c, c2c)
                 if obj < best_obj:
                     best_obj = obj
