@@ -90,7 +90,7 @@ class googleOR(ABSolver):
         data = {}
         data["distance"] = (dist * 1e4).astype(int)
         data["num_nodes"] = len(dist)
-        data["num_vehicles"] = 10
+        data["num_vehicles"] = 20
         data["depot"] = 0
         data["demand"] = [0] + (self.demand * 1e3).astype(int).tolist()
         data["capacities"] = [1e3] * data["num_vehicles"]
