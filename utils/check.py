@@ -23,6 +23,7 @@ def checkValid(routes, depot, loc, demand):
             left -= demand[v]
             if left < -1e-7:
                 print("Demand of node {} cannot be satisfied.".format(v))
+                print("Left capacity: {}".format(left))
                 return False
             # remove
             nodes.remove(v)
