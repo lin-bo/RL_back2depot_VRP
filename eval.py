@@ -13,7 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from prob import VRPDataset
-from solver import cwHeuristic, sweepHeuristic
+from solver import cwHeuristic, sweepHeuristic, googleOR
 from utils import routesPlot, checkValid
 
 def eval(size, algo, solver_args):
@@ -42,6 +42,11 @@ def eval(size, algo, solver_args):
         solver = sweepHeuristic
         print("  Random iter: {}".format(solver_args[0]))
         args = {"rand_iter":solver_args[0]}
+    if algo == "gg":
+        print("  Google OR Tools")
+        solver = googleOR
+        print("  Solution limit: {}".format(solver_args[0]))
+        args = {"solution_limit":solver_args[0]}
     print()
     # create table
     path = "./res"
@@ -83,7 +88,7 @@ if __name__ == "__main__":
                         help="graph size")
     parser.add_argument("--algo",
                         type=str,
-                        choices=["cw", "sw"],
+                        choices=["cw", "sw", "gg"],
                         help="algorithm")
     parser.add_argument("--args",
                         type=int,
