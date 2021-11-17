@@ -65,7 +65,7 @@ class googleOR(ABSolver):
 
         # Setting first solution heuristic
         search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-        search_parameters.time_limit.FromSeconds(3)
+        search_parameters.time_limit.FromSeconds(10)
         search_parameters.solution_limit = solution_limit
 
         # solve
