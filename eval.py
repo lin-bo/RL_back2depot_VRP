@@ -75,9 +75,10 @@ def eval(size, algo, solver_args):
         # table row
         if routes:
             routes_str = ";".join([",".join(map(str, r)) for r in routes])
+            num_veh = len(routes)
         else:
             routes_str = None
-        num_veh = len(routes)
+            num_veh = None
         elpased = tock - tick
         row = {"Obj":obj, "Routes":routes_str, "Vehicles":num_veh, "Elapsed":elpased}
         df = df.append(row, ignore_index=True)
