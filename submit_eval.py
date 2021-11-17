@@ -38,11 +38,11 @@ config = parser.parse_args()
 instance_logs_path = "slurm_logs_spotest"
 if config.algo == "cw":
     if config.size == 20:
-        timeout_min = 20 * config.args[0] * config.args[1]
+        timeout_min = 10 * config.args[0] * config.args[1]
     if config.size == 50:
         timeout_min = 40 * config.args[0] * config.args[1]
     if config.size == 100:
-        timeout_min = 80 * config.args[0] * config.args[1]
+        timeout_min = 100 * config.args[0] * config.args[1]
 if config.algo == "sw":
     if config.size == 20:
         timeout_min = 15 * config.args[0]
