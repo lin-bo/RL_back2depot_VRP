@@ -51,7 +51,12 @@ if config.algo == "sw":
     if config.size == 100:
         timeout_min = 60 * config.args[0]
 if config.algo == "gg":
-    timeout_min = 200
+    if config.size == 20:
+        timeout_min = 100
+    if config.size == 50:
+        timeout_min = 200
+    if config.size == 100:
+        timeout_min = 600
 mem_gb = 1
 num_cpus = 1
 
