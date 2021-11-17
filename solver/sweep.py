@@ -55,7 +55,7 @@ class sweepHeuristic(ABSolver):
             # get clusters
             while nodes:
                 # increase angle
-                v = self._get_node_from_ange(angle, deg, nodes)
+                v = self._getNodefromAngle(angle, deg, nodes)
                 # go back depot
                 if self.demand[v] > left:
                     clusters.append(cluster)
@@ -81,7 +81,7 @@ class sweepHeuristic(ABSolver):
 
 
     @staticmethod
-    def _get_node_from_ange(angle, deg, nodes):
+    def _getNodefromAngle(angle, deg, nodes):
         """
         A method to increase angle until it equal to some node
         """
