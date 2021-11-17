@@ -65,12 +65,18 @@ def eval(size, algo, solver_args):
         # run solver
         prob = solver(depot, loc, demand)
         tick = time.time()
-        routes, obj = prob.solve(**args)
+        try:
+            routes, obj = prob.solve(**args)
+        except:
+            routes, obj = None, None
         tock = time.time()
         # check valid
         # assert checkValid(routes, depot, loc, demand), "Infeasible solution."
         # table row
-        routes_str = ";".join([",".join(map(str, r)) for r in routes])
+        if routes:
+            routes_str = ";".join([",".join(map(str, r)) for r in routes])
+        else:
+            routes_str = None
         num_veh = len(routes)
         elpased = tock - tick
         row = {"Obj":obj, "Routes":routes_str, "Vehicles":num_veh, "Elapsed":elpased}
