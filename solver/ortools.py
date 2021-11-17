@@ -24,7 +24,7 @@ class googleOR(ABSolver):
         demand (array): demands of customers
     """
 
-    def solve(self, timelimit=3):
+    def solve(self, solution_limit=100):
         """
         A method to solve model
         """
@@ -65,11 +65,8 @@ class googleOR(ABSolver):
 
         # Setting first solution heuristic
         search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-        search_parameters.first_solution_strategy = (
-            routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
-        search_parameters.local_search_metaheuristic = (
-            routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
-        search_parameters.time_limit.FromSeconds(timelimit)
+        search_parameters.time_limit.FromSeconds(3)
+        search_parameters.solution_limit = solution_limit
 
         # solve
         sol = routing.SolveWithParameters(search_parameters)
