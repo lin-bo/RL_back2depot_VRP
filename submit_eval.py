@@ -23,7 +23,7 @@ parser.add_argument("--size",
                     help="graph size")
 parser.add_argument("--algo",
                     type=str,
-                    choices=["cw", "sw"],
+                    choices=["cw", "sw", "gg"],
                     help="algorithm")
 parser.add_argument("--args",
                     type=int,

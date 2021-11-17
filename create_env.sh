@@ -42,6 +42,7 @@ if [ ! -d "./$VENVS_DIR/$VENV_NAME" ]; then
   pip install numpy
   pip install pandas
   pip install matplotlib
+  pip install ortools
   pip install torch==1.7.0
   pip install scipy
   pip install submitit
