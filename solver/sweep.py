@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+# Author: Bo Tang
 """
 Randomized sweep heuristic algorithm
 https://www.jstor.org/stable/3007888
@@ -178,8 +179,7 @@ class sweepHeuristic(ABSolver):
                     unvisited.remove(current)
                     neighbors = [
                         j for i, j in selected.select(current, "*")
-                        if j in unvisited
-                    ]
+                        if j in unvisited]
                 if len(cycle) > len(thiscycle):
                     cycle = thiscycle
             return cycle
