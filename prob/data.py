@@ -96,6 +96,9 @@ class VRPDataset(Dataset):
         g = dgl.from_networkx(nx_graph, idtype=torch.int32)
         g.ndata["x"] = torch.zeros(g.num_nodes(), 1)
         g.edata["w"] = torch.from_numpy(weights)
+        # add self loop
+        g = dgl.remove_self_loop(g)
+        g = dgl.add_self_loop(g)
         return g
 
 
