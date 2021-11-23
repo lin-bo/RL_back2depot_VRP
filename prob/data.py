@@ -108,6 +108,8 @@ class VRPDGLDataset(DGLDataset):
         for i in tqdm(range(self.num_samples)):
             g = self._buildGraph(i)
             self.graph.append(g)
+            print(g)
+            break
 
     def _buildGraph(self, i):
         """
@@ -117,11 +119,13 @@ class VRPDGLDataset(DGLDataset):
         dist = self._getDist(i)
         # build nx graph
         nx_graph = nx.from_numpy_matrix(dist, create_using=nx.DiGraph)
-        weights = np.array([nx_graph.edges[e]["weight"] for e in nx_graph.edges],
-                           dtype=np.float32)
+        # keep k nearest
+        self._getKNearest(nx_graph, dist, 10)
         # build dgl graph
         g = dgl.from_networkx(nx_graph, idtype=torch.int32)
         g.ndata["x"] = torch.zeros(g.num_nodes(), 1)
+        weights = np.array([nx_graph.edges[e]["weight"] for e in nx_graph.edges],
+                           dtype=np.float32)
         g.edata["w"] = torch.from_numpy(weights)
         # add self loop
         g = dgl.remove_self_loop(g)
@@ -139,6 +143,18 @@ class VRPDGLDataset(DGLDataset):
         # calculate distance
         dist = distance.cdist(loc, loc, "euclidean")
         return dist
+
+    def _getKNearest(self, nx_graph, dist, k):
+        """
+        A method to obtain k nearest distance matrix
+        """
+        remove_list = []
+        for i in range(dist.shape[0]):
+            ind = np.argpartition(dist[i], k)[:k]
+            for j in range(dist.shape[1]):
+                if j not in ind:
+                    remove_list.append((i,j))
+        nx_graph.remove_edges_from(remove_list)
 
     def __len__(self):
         """
