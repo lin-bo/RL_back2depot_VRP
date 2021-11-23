@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-# Author: Wouter Kool
+# Author: Wouter Kool & Bo Lin
 
 import torch
 from torch import nn
@@ -277,6 +277,20 @@ class AttentionModel(nn.Module):
 
         # Collected lists, return Tensor
         return torch.stack(outputs, 1), torch.stack(sequences, 1)
+
+    def re_init(self, input):
+        """
+        initialize the routing state, embedding, fixed given the input
+        """
+
+        state = self.problem.make_state(input)
+        embeddings, _ = self.embedder(self._init_embed(input))
+        fixed = self._precompute(embeddings)
+
+        self.embeddings = embeddings
+        self.fixed = fixed
+
+        return state
 
     def sample_many(self, input, batch_rep=1, iter_rep=1):
         """

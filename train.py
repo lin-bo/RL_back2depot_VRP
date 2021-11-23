@@ -30,18 +30,27 @@ def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     print("Generating dataset...")
     data = VRPDGLDataset(num_samples=num_samples, seed=seed)
     dataloader = GraphDataLoader(data, batch_size=batch)
+
     # init memory
     mem = memInit()
+
     # set optimizer
     # optimizer = optim.Adam(model.parameters(), lr=lr)
+
     # set time horizon
     horizon = 2 * size
+
     # load routing agent
     rou_agent = load_routing_agent(size=size)
+
     print("Training model...")
     for batch_data, batch_graph in dataloader:
         # set state-action queue
         sa_queue = queue.Queue()
+
+        # initialize routing state
+        rou_state = rou_agent.re_init(batch_data['loc'])
+
         # init state
         state = stateInit()
         for t in range(horizon):
