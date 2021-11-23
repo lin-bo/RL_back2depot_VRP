@@ -36,7 +36,7 @@ def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     # set time horizon
     horizon = 2 * size
     print("Training model...")
-    for batch_graph in dataloader:
+    for batch_data, batch_graph in dataloader:
         # set state-action queue
         sa_queue = queue.Queue()
         # init state
