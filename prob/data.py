@@ -108,8 +108,6 @@ class VRPDGLDataset(DGLDataset):
         for i in tqdm(range(self.num_samples)):
             g = self._buildGraph(i)
             self.graph.append(g)
-            print(g)
-            break
 
     def _buildGraph(self, i):
         """
@@ -123,7 +121,9 @@ class VRPDGLDataset(DGLDataset):
         self._getKNearest(nx_graph, dist, 10)
         # build dgl graph
         g = dgl.from_networkx(nx_graph, idtype=torch.int32)
-        g.ndata["x"] = torch.zeros(g.num_nodes(), 1)
+        # add attributes
+        g.ndata["x"] = torch.zeros(g.num_nodes(), 2)
+        g.ndata["x"][1:,1] = self.data[i]["demand"]
         weights = np.array([nx_graph.edges[e]["weight"] for e in nx_graph.edges],
                            dtype=np.float32)
         g.edata["w"] = torch.from_numpy(weights)
