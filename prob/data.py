@@ -166,4 +166,4 @@ class VRPDGLDataset(DGLDataset):
         """
         A method to get item
         """
-        return self.graph[idx]
+        return self.data[idx], self.graph[idx]
