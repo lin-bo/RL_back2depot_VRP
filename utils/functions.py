@@ -2,30 +2,11 @@
 # coding: utf-8
 # Author: Wouter Kool
 
-import warnings
 
 import torch
-import numpy as np
 import os
 import json
-from tqdm import tqdm
-from multiprocessing.dummy import Pool as ThreadPool
-from multiprocessing import Pool
 import torch.nn.functional as F
-
-
-def load_problem(name):
-    from problems import TSP, CVRP, SDVRP, OP, PCTSPDet, PCTSPStoch
-    problem = {
-        'tsp': TSP,
-        'cvrp': CVRP,
-        'sdvrp': SDVRP,
-        'op': OP,
-        'pctsp_det': PCTSPDet,
-        'pctsp_stoch': PCTSPStoch,
-    }.get(name, None)
-    assert problem is not None, "Currently unsupported problem: {}!".format(name)
-    return problem
 
 
 def torch_load_cpu(load_path):
@@ -82,6 +63,7 @@ def load_args(filename):
 
 def load_model(path, epoch=None):
     from attention_nets.attention_model import AttentionModel
+    from prob import tsp
 
     if os.path.isfile(path):
         model_filename = path
@@ -99,17 +81,12 @@ def load_model(path, epoch=None):
 
     args = load_args(os.path.join(path, 'args.json'))
 
-    problem = load_problem(args['problem'])
+    # problem = load_problem(args['problem'])
 
-    model_class = {
-        'attention': AttentionModel
-    }.get(args.get('model', 'attention'), None)
-    assert model_class is not None, "Unknown model: {}".format(model_class)
-
-    model = model_class(
+    model = AttentionModel(
         args['embedding_dim'],
         args['hidden_dim'],
-        problem,
+        tsp,
         n_encode_layers=args['n_encode_layers'],
         mask_inner=True,
         mask_logits=True,
