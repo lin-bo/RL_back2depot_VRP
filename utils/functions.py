@@ -63,7 +63,7 @@ def load_args(filename):
 
 def load_model(path, epoch=None):
     from attention_nets.attention_model import AttentionModel
-    from prob import tsp
+    from prob.tsp.problem_tsp import TSP
 
     if os.path.isfile(path):
         model_filename = path
@@ -86,7 +86,7 @@ def load_model(path, epoch=None):
     model = AttentionModel(
         args['embedding_dim'],
         args['hidden_dim'],
-        tsp,
+        TSP,
         n_encode_layers=args['n_encode_layers'],
         mask_inner=True,
         mask_logits=True,
