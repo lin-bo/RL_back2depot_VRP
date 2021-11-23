@@ -14,6 +14,7 @@ import networkx as nx
 from torch.utils.data import Dataset
 import torch
 import dgl
+from dgl.data import DGLDataset
 from tqdm import tqdm
 
 CAPACITIES = {10: 20., 20: 30., 50: 40., 100: 50.}
@@ -27,6 +28,7 @@ def make_instance(args):
     }
     return instance
 
+
 class VRPDataset(Dataset):
     """
     This class is VRP Dataset
@@ -38,7 +40,7 @@ class VRPDataset(Dataset):
         seed (int): random seed
     """
 
-    def __init__(self, size=50, mode="test", num_samples=1000000, seed=1234):
+    def __init__(self, size=50, mode="test", num_samples=1000, seed=1234):
         # check mode
         assert mode in ["train", "val", "test"], "Invalid dataset mode."
         # init Dataset
@@ -68,19 +70,44 @@ class VRPDataset(Dataset):
                 }
                 for i in range(num_samples)
             ]
-        # build graph
-        for i in tqdm(range(num_samples)):
-            g = self._buildGraph(i)
-            self.data[i]["graph"] = g
-
 
     def __len__(self):
+        """
+        A method to get data size
+        """
         return len(self.data)
 
-
     def __getitem__(self, idx):
+        """
+        A method to get item
+        """
         return self.data[idx]
 
+
+class VRPDGLDataset(DGLDataset):
+    """
+    This class is VRP Dataset
+
+    Args:
+        size (int): number of nodes in graph
+        mode (str): dataset mode
+        num_samples (int): number of instances
+        seed (int): random seed
+    """
+
+    def __init__(self, size=50, mode="test", num_samples=1000, seed=1234):
+        self.num_samples = num_samples
+        self.data = VRPDataset(size, mode, num_samples, seed).data
+        super(VRPDGLDataset, self).__init__(name="vrp")
+
+    def process(self):
+        """
+        A method to build DGL graph
+        """
+        self.graph = []
+        for i in tqdm(range(self.num_samples)):
+            g = self._buildGraph(i)
+            self.graph.append(g)
 
     def _buildGraph(self, i):
         """
@@ -101,7 +128,6 @@ class VRPDataset(Dataset):
         g = dgl.add_self_loop(g)
         return g
 
-
     def _getDist(self, i):
         """
         A method to calculate distance matrix
@@ -113,3 +139,15 @@ class VRPDataset(Dataset):
         # calculate distance
         dist = distance.cdist(loc, loc, "euclidean")
         return dist
+
+    def __len__(self):
+        """
+        A method to get data size
+        """
+        return len(self.graph)
+
+    def __getitem__(self, idx):
+        """
+        A method to get item
+        """
+        return self.graph[idx]
