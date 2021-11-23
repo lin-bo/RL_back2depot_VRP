@@ -9,7 +9,6 @@ import queue
 
 from torch import optim
 from dgl.dataloading import GraphDataLoader
-
 from prob import VRPDGLDataset
 
 
