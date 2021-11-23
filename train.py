@@ -10,6 +10,7 @@ import queue
 from torch import optim
 from dgl.dataloading import GraphDataLoader
 from prob import VRPDGLDataset
+from utils.functions import load_routing_agent
 
 
 def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
@@ -32,9 +33,11 @@ def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     # init memory
     mem = memInit()
     # set optimizer
-    #optimizer = optim.Adam(model.parameters(), lr=lr)
+    # optimizer = optim.Adam(model.parameters(), lr=lr)
     # set time horizon
     horizon = 2 * size
+    # load routing agent
+    rou_agent = load_routing_agent(size=size)
     print("Training model...")
     for batch_data, batch_graph in dataloader:
         # set state-action queue

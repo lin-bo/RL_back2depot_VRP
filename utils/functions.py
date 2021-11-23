@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-# Author: Wouter Kool
+# Author: Wouter Kool & Bo Lin
 
 
 import torch
@@ -148,3 +148,23 @@ def sample_many(inner_func, get_cost_func, input, batch_rep=1, iter_rep=1):
     minpis = pis[torch.arange(pis.size(0), out=argmincosts.new()), argmincosts]
 
     return minpis, mincosts
+
+
+def load_routing_agent(size):
+    """
+    Load the routing agent (pretrained TSP models from Kool et al.)
+    Args:
+        size(int): graph size (# of customers)
+    """
+
+    if size not in [20, 50, 100]:
+        raise ValueError('No pre-trained tsp model is available for the given size, please use 20, 50, or 100')
+
+    model, _ = load_model('./pretrained_tsp/tsp_{}'.format(size))
+    use_cuda = torch.cuda.is_available()  # and not opts.no_cuda
+    device = torch.device('cuda:0' if use_cuda else 'cpu')
+    model.to(device)
+    model.eval()
+    model.set_decode_type('greedy')
+
+    return model
