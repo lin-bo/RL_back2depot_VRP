@@ -1,3 +1,3 @@
 #!/usr/bin/env python
 # coding: utf-8
-from prob.data import VRPDataset
+from prob.data import VRPDataset, VRPDGLDataset

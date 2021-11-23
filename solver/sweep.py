@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
+# Author: Bo Tang
 """
-Randomize sweep heuristic algorithm
+Randomized sweep heuristic algorithm
 https://www.jstor.org/stable/3007888
 """
 
@@ -55,7 +56,7 @@ class sweepHeuristic(ABSolver):
             # get clusters
             while nodes:
                 # increase angle
-                v = self._get_node_from_ange(angle, deg, nodes)
+                v = self._getNodefromAngle(angle, deg, nodes)
                 # go back depot
                 if self.demand[v] > left:
                     clusters.append(cluster)
@@ -81,7 +82,7 @@ class sweepHeuristic(ABSolver):
 
 
     @staticmethod
-    def _get_node_from_ange(angle, deg, nodes):
+    def _getNodefromAngle(angle, deg, nodes):
         """
         A method to increase angle until it equal to some node
         """
@@ -89,7 +90,7 @@ class sweepHeuristic(ABSolver):
             # check euqality
             v_cand = set(np.where(deg == angle)[0]).intersection(nodes)
             if v_cand:
-                return list(v_cand)[0]
+                return v_cand.pop()
             angle = ((angle + 1) + 180) % 360 - 180
 
 
@@ -178,8 +179,7 @@ class sweepHeuristic(ABSolver):
                     unvisited.remove(current)
                     neighbors = [
                         j for i, j in selected.select(current, "*")
-                        if j in unvisited
-                    ]
+                        if j in unvisited]
                 if len(cycle) > len(thiscycle):
                     cycle = thiscycle
             return cycle
