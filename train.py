@@ -6,6 +6,7 @@ Deep Q-Learning
 """
 
 import queue
+import time
 
 import torch
 
@@ -31,9 +32,11 @@ def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     device = "cpu"
     if torch.cuda.is_available():
         device = "cuda"
+    print("Device:\n  {}".format(device))
     model.to(device)
     # load dataset
-    print("Generating dataset...")
+    print("\nGenerating dataset...")
+    time.sleep(1)
     data = VRPDGLDataset(num_samples=num_samples, seed=seed)
     dataloader = GraphDataLoader(data, batch_size=batch)
     # init memory
@@ -43,7 +46,7 @@ def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     # set time horizon
     horizon = 2 * size
     # load routing agent
-    print("\nLoad routing agent...")
+    print("\nLoading routing agent...")
     rou_agent = load_routing_agent(size=size)
     print("\nTraining model...")
     for batch_data, batch_graph in dataloader:
