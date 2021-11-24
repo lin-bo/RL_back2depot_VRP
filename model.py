@@ -12,11 +12,34 @@ import dgl.function as fn
 
 
 class GNN(nn.Module):
-    def __init__(self, in_feats, n_hidden, dropout=0.3):
+    """
+    This class is gnn
+
+    Args:
+        x_feats (int): dimension of node feature
+        w_feats (int): dimension of edge weight
+        e_feats (int): dimension of embedding
+    """
+    def __init__(self, x_feats=2, w_feats=1, e_feats=64):
         super(GNN, self).__init__()
-        self._in_feats = in_feats
-        self._n_hidden = n_hidden
-        self._dropout = dropout
+        self._x_feats = x_feats
+        self._w_feats = w_feats
+        self._e_feats = e_feats
+        # layers
+        self.layers1 = structure2Vec(x_feats=self._x_feats,
+                                     w_feats=self._w_feats,
+                                     in_feats=self._x_feats,
+                                     out_feats=self._e_feats)
+        self.layers2 = structure2Vec(x_feats=self._x_feats,
+                                     w_feats=self._w_feats,
+                                     in_feats=self._e_feats,
+                                     out_feats=self._e_feats)
+
+    def forward(self, graph):
+        h = self.layers1(graph, graph.ndata["x"])
+        h = self.layers2(graph, h)
+        return h
+
 
 class structure2Vec(nn.Module):
     """
@@ -27,22 +50,20 @@ class structure2Vec(nn.Module):
         w_feats (int): dimension of edge weight
         in_feats (int): dimension of input feature
         out_feats (int): dimension of output feature
-        dropout (float): dropout rate
     """
 
-    def __init__(self, x_feats, w_feats, in_feats, out_feats, dropout=0.3):
+    def __init__(self, x_feats, w_feats, in_feats, out_feats):
         super(structure2Vec, self).__init__()
+        self._in_feats = in_feats
         self._x_feats = x_feats
         self._w_feats = w_feats
-        self._in_feats = in_feats
         self._out_feats = out_feats
-        self._dropout = dropout
-        # multiplication weights
-        self.weights = nn.Parameter(torch.Tensor(self._out_feats))
         # fc
         self._xfc = nn.Linear(self._x_feats, self._out_feats, bias=False)
         self._wfc = nn.Linear(self._out_feats, self._out_feats, bias=False)
         self._ffc = nn.Linear(self._in_feats, self._out_feats)
+        # multiplication weights
+        self.weights = nn.Parameter(torch.Tensor(self._out_feats))
 
     def forward(self, graph, feat):
         h = self._xfc(graph.ndata["x"]) + self._aggw(graph) + self._aggf(graph, feat)
