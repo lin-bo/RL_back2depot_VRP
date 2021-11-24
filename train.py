@@ -12,7 +12,7 @@ import torch
 from dgl.dataloading import GraphDataLoader
 from prob import VRPDGLDataset
 from attention_model import load_routing_agent
-from utils.state import routingState
+from utils.state import returnState
 
 def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     """
@@ -57,7 +57,7 @@ def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
         # initialize routing state
         rou_state = rou_agent.re_init(batch_data['loc'])
         # init state
-        state = routingState(batch_data)
+        state = returnState(batch_data)
         for t in range(horizon):
             # take action
             action = actionDecode(batch_graph, state)

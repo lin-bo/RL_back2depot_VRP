@@ -7,7 +7,7 @@ Routing state in reinforcement learning
 
 import torch
 
-class routingState:
+class returnState:
     """
     This class is enviroment state
 
