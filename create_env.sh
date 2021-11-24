@@ -11,6 +11,8 @@ LOGDIR="./logs"
 
 # load module
 echo "Load module..."
+module purge
+module load cuda
 module load python/3.8
 module load gurobi/$GRB_VER
 # check if the license is set
@@ -44,6 +46,7 @@ if [ ! -d "./$VENVS_DIR/$VENV_NAME" ]; then
   pip install matplotlib
   pip install ortools
   pip install torch==1.7.0
+  pip install dgl-cu110 -f https://data.dgl.ai/wheels/repo.html
   pip install scipy
   pip install submitit
 
