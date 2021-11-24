@@ -37,7 +37,7 @@ class structure2Vec(nn.Module):
         self._in_feats = in_feats
         self._out_feats = out_feats
         self._dropout = dropout
-        # multiplication wights
+        # multiplication weights
         self.weights = nn.Parameter(torch.Tensor(self._out_feats))
         # fc
         self._xfc = nn.Linear(self._x_feats, self._out_feats, bias=False)
