@@ -7,10 +7,9 @@ Deep Q-Learning
 
 import queue
 
-from torch import optim
 from dgl.dataloading import GraphDataLoader
 from prob import VRPDGLDataset
-from utils.functions import load_routing_agent
+from attention_utils.functions import load_routing_agent
 
 
 def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
@@ -91,11 +90,13 @@ def stateInit():
     pass
 
 
-def stateUpdate(action):
+def stateUpdate(action, state, rou_agent, rou_state):
     """
     A fuctiion to update state after action
     """
-    pass
+
+    # make routing decision
+    log_p, mask = rou_agent._get_log_p(rou_agent.fixed, state)
 
 
 def actionDecode(batch_graph, state):
