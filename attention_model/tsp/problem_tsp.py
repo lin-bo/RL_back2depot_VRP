@@ -2,8 +2,8 @@ from torch.utils.data import Dataset
 import torch
 import os
 import pickle
-from prob.tsp.state_tsp import StateTSP
-from attention_utils.beam_search import beam_search
+from attention_model.tsp.state_tsp import StateTSP
+from attention_model.attention_utils.beam_search import beam_search
 
 
 class TSP(object):

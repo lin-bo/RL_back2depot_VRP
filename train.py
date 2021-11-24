@@ -9,7 +9,7 @@ import queue
 
 from dgl.dataloading import GraphDataLoader
 from prob import VRPDGLDataset
-from attention_utils.functions import load_routing_agent
+from attention_model import load_routing_agent
 
 
 def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):

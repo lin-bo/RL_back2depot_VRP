@@ -1,6 +1,6 @@
 import torch
 from typing import NamedTuple
-from attention_utils.boolmask import mask_long2bool, mask_long_scatter
+from attention_model.attention_utils.boolmask import mask_long2bool, mask_long_scatter
 
 
 class StateTSP(NamedTuple):

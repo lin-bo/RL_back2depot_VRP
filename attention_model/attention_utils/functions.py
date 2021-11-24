@@ -62,8 +62,8 @@ def load_args(filename):
 
 
 def load_model(path, epoch=None):
-    from attention_nets.attention_model import AttentionModel
-    from prob.tsp.problem_tsp import TSP
+    from attention_model.attention_nets.attention_model import AttentionModel
+    from attention_model.tsp.problem_tsp import TSP
 
     if os.path.isfile(path):
         model_filename = path

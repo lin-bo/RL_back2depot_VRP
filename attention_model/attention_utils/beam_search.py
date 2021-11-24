@@ -1,6 +1,6 @@
 import torch
 from typing import NamedTuple
-from attention_utils.lexsort import torch_lexsort
+from attention_model.attention_utils.lexsort import torch_lexsort
 
 
 def beam_search(*args, **kwargs):
