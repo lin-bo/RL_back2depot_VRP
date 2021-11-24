@@ -465,7 +465,7 @@ class AttentionModel(nn.Module):
 
                 flag = 1 - torch.tensor(state.i.tolist()).reshape(-1, 1, 1)
                 flag.to(device)
-                out = out1 * flag + out2 * (1 - flag)
+                out = out1 * flag + out2 * (torch.tensor(1, device=device) - flag)
 
                 return out
 
