@@ -63,7 +63,8 @@ class structure2Vec(nn.Module):
         self._wfc = nn.Linear(self._out_feats, self._out_feats, bias=False)
         self._ffc = nn.Linear(self._in_feats, self._out_feats)
         # multiplication weights
-        self.weights = nn.Parameter(torch.Tensor(self._out_feats))
+        self.weights = nn.Parameter(torch.normal(mean=torch.zeros(self._out_feats),
+                                                 std=1e-2))
 
     def forward(self, graph, feat):
         h = self._xfc(graph.ndata["x"]) + self._aggw(graph) + self._aggf(graph, feat)
