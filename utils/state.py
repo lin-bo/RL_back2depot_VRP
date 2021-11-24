@@ -69,7 +69,7 @@ class returnState:
         # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
 
         flag_demand = self._demand > self.c.reshape((self._batch, 1))
-        mask *= flag_demand.reshape((self._batch, 1, -1))
+        mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
         # normalize the probability
         prob *= ~mask
         prob /= prob.sum(axis=-1, keepdim=True)
