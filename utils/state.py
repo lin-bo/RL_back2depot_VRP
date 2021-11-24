@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-# Author: Bo Tang
+# Author: Bo Tang & Bo Lin
 """
 Routing state in reinforcement learning
 """
