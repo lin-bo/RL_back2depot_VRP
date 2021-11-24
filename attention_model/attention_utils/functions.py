@@ -163,7 +163,7 @@ def load_routing_agent(size):
 
     model, _ = load_model('./attention_model/pretrained_tsp/tsp_{}'.format(size))
     use_cuda = torch.cuda.is_available()  # and not opts.no_cuda
-    device = torch.device('cuda:0' if use_cuda else 'cpu')
+    device = torch.device('cuda' if use_cuda else 'cpu')
     model.to(device)
     model.eval()
     model.set_decode_type('greedy')
