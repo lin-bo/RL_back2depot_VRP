@@ -87,7 +87,7 @@ class returnState:
         satisfied = self._demand.gather(axis=-1, index=next_nodes.reshape((-1, 1)))[:, 0].to(self.device)
         self.c = 1 * action + (self.c - satisfied) * (1 - action)
         self.o += self._one_hot[next_nodes + 1] * (1 - action.reshape((-1, 1)))
-        self.o = torch.minimum(self.o, torch.tensor(1))
+        self.o = torch.minimum(self.o, torch.tensor(1, device=self.device))
 
     def _cal_reward(self):
         """
