@@ -5,6 +5,7 @@
 Graph neural networks model
 """
 
+import torch
 from torch import nn
 from torch.nn import functional as f
 import dgl.function as fn
@@ -36,25 +37,24 @@ class structure2Vec(nn.Module):
         self._in_feats = in_feats
         self._out_feats = out_feats
         self._dropout = dropout
+        # multiplication wights
+        self.weights = nn.Parameter(torch.Tensor(self._out_feats))
         # fc
         self._xfc = nn.Linear(self._x_feats, self._out_feats, bias=False)
-        self._w1fc = nn.Linear(self._w_feats, self._out_feats)
-        self._w2fc = nn.Linear(self._out_feats, self._out_feats, bias=False)
+        self._wfc = nn.Linear(self._out_feats, self._out_feats, bias=False)
         self._ffc = nn.Linear(self._in_feats, self._out_feats)
 
     def forward(self, graph, feat):
-        h = self._xfc(graph.ndata["x"])
-        #h += self._aggw(graph)
-        h += self._aggf(graph, feat)
+        h = self._xfc(graph.ndata["x"]) + self._aggw(graph) + self._aggf(graph, feat)
         return f.relu(h)
 
     def _aggw(self, graph):
         with graph.local_scope():
-            g = graph.edata["w"]
+            g = torch.stack([w * self.weights for w in graph.edata["w"]])
             graph.edata["g"] = f.relu(g)
             graph.update_all(fn.copy_e("g", "m"), fn.sum("m", "h_new"))
             h = graph.ndata["h_new"]
-            return self._w2fc(h)
+            return self._wfc(h)
 
     def _aggf(self, graph, feat):
         with graph.local_scope():
