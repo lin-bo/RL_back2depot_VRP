@@ -62,7 +62,7 @@ def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
             # take action
             action = actionDecode(batch_graph, state)
             # update state
-            rou_state = state.update(action, rou_agent, rou_state)
+            rou_state, step_reward = state.update(action, rou_agent, rou_state)
             # put into queue
             sa_queue.put((state, action))
             if t >= step - 1:
