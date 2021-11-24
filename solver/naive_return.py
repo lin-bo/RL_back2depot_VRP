@@ -46,11 +46,8 @@ class naiveReturn:
 
         # sequentially generate the solutions
         for t in range(self.horizon):
-            print()
-            print(t)
             action = self._get_action()
             next_nodes = self._routing_decision(state)
-            print('action:', action[0].tolist(), 'next node:', next_nodes.tolist()[0])
             self._update_return_state(next_nodes, action)
             state = state.new_update(next_nodes, action)
 
@@ -74,7 +71,7 @@ class naiveReturn:
         low_cap = (self.c <= self.thre).to(torch.int32)
         all_served = (self.o.sum(axis=1) >= self._size).to(torch.int32)
 
-        return torch.minimum(low_cap + all_served, torch.tensor(1)).to(self.device)
+        return torch.minimum(low_cap + all_served, torch.tensor(1, device=self.device))
 
     def _routing_decision(self, rou_state):
         """
@@ -89,8 +86,7 @@ class naiveReturn:
         # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
 
         flag_demand = self._demand > self.c.reshape((self._batch, 1))
-        mask =  torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
-        print('mask:', mask[0][0].tolist()[0])
+        mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
         # normalize the probability
         prob *= ~mask
         prob /= prob.sum(axis=-1, keepdim=True)

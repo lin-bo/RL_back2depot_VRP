@@ -108,8 +108,8 @@ class StateTSP(NamedTuple):
         # Update should only be called with just 1 parallel step, in which case we can check this way if we should update
         first_a = prev_a if len(self.i.tolist()) == 1 else self.first_a
 
-        visited_ = self.visited_.scatter_(-1, prev_a[:, :, None], 1)
-        visited_ = visited_ * (1 - action.reshape(-1, 1, 1)) + self.visited_ * action.reshape(-1, 1, 1)
+        visited_ = self.visited_.scatter(-1, prev_a[:, :, None], 1)
+        visited_ = visited_ * (1 - action.reshape((-1, 1, 1))) + self.visited_ * action.reshape((-1, 1, 1))
         # visited_ = visited_.to(torch.int64)
 
         idx = (self.i + 1) * (1 - action)
