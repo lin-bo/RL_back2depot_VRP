@@ -308,12 +308,12 @@ class AttentionModel(nn.Module):
 
     def _select_node(self, probs, mask):
 
-        assert (probs == probs).all(), "Probs should not contain any nans"
+        # assert (probs == probs).all(), "Probs should not contain any nans"
 
         if self.decode_type == "greedy":
             _, selected = probs.max(1)
-            assert not mask.gather(1, selected.unsqueeze(
-                -1)).data.any(), "Decode greedy: infeasible action has maximum probability"
+            # assert not mask.gather(1, selected.unsqueeze(
+            #     -1)).data.any(), "Decode greedy: infeasible action has maximum probability"
 
         elif self.decode_type == "sampling":
             selected = probs.multinomial(1).squeeze(1)
@@ -378,7 +378,7 @@ class AttentionModel(nn.Module):
         if normalize:
             log_p = torch.log_softmax(log_p / self.temp, dim=-1)
 
-        assert not torch.isnan(log_p).any()
+        # assert not torch.isnan(log_p).any()
 
         return log_p, mask
 
@@ -441,18 +441,30 @@ class AttentionModel(nn.Module):
                 -1
             )
         else:  # TSP
-
             if num_steps == 1:  # We need to special case if we have only 1 step, may be the first or not
-                if state.i.item() == 0:
-                    # First and only step, ignore prev_a (this is a placeholder)
-                    return self.W_placeholder[None, None, :].expand(batch_size, 1, self.W_placeholder.size(-1))
-                else:
-                    return embeddings.gather(
-                        1,
-                        torch.cat((state.first_a, current_node), 1)[:, :, None].expand(batch_size, 2,
-                                                                                       embeddings.size(-1))
-                    ).view(batch_size, 1, -1)
-            # More than one step, assume always starting with first
+                # if state.i.item() == 0:
+                #     # First and only step, ignore prev_a (this is a placeholder)
+                #     return self.W_placeholder[None, None, :].expand(batch_size, 1, self.W_placeholder.size(-1))
+                # else:
+                #     return embeddings.gather(
+                #         1,
+                #         torch.cat((state.first_a, current_node), 1)[:, :, None].expand(batch_size, 2,
+                #                                                                        embeddings.size(-1))
+                #     ).view(batch_size, 1, -1)
+
+                out1 = self.W_placeholder[None, None, :].expand(batch_size, 1, self.W_placeholder.size(-1))
+                out2 = embeddings.gather(
+                    1,
+                    torch.cat((state.first_a, current_node), 1)[:, :, None].expand(batch_size, 2,
+                                                                                   embeddings.size(-1))
+                ).view(batch_size, 1, -1)
+
+                flag = 1 - torch.tensor(state.i.tolist()).reshape(-1, 1, 1)
+                out = out1 * flag + out2 * (1 - flag)
+
+                return out
+
+                # More than one step, assume always starting with first
             embeddings_per_step = embeddings.gather(
                 1,
                 current_node[:, 1:, None].expand(batch_size, num_steps - 1, embeddings.size(-1))

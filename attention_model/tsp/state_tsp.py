@@ -22,10 +22,11 @@ class StateTSP(NamedTuple):
 
     @property
     def visited(self):
-        if self.visited_.dtype == torch.uint8:
-            return self.visited_
-        else:
-            return mask_long2bool(self.visited_, n=self.loc.size(-2))
+        return self.visited_
+        # if self.visited_.dtype == torch.uint8:
+        #     return self.visited_
+        # else:
+        #     return mask_long2bool(self.visited_, n=self.loc.size(-2))
 
     # def __getitem__(self, key):
     #     assert torch.is_tensor(key) or isinstance(key, slice)  # If tensor, idx all tensors by this tensor:
@@ -96,6 +97,25 @@ class StateTSP(NamedTuple):
 
         return self._replace(first_a=first_a, prev_a=prev_a, visited_=visited_,
                              lengths=lengths, cur_coord=cur_coord, i=self.i + 1)
+
+    def new_update(self, selected, action):
+
+        # Update the state
+        prev_a = selected[:, None]  # Add dimension for step
+
+        cur_coord = self.loc[self.ids, prev_a]
+
+        # Update should only be called with just 1 parallel step, in which case we can check this way if we should update
+        first_a = prev_a if len(self.i.tolist()) == 1 else self.first_a
+
+        visited_ = self.visited_.scatter_(-1, prev_a[:, :, None], 1)
+        visited_ = visited_ * (1 - action.reshape(-1, 1, 1)) + self.visited_ * action.reshape(-1, 1, 1)
+        visited_ = visited_.to(torch.int64)
+
+        idx = (self.i + 1) * (1 - action)
+
+        return self._replace(first_a=first_a, prev_a=prev_a, visited_=visited_,
+                             cur_coord=cur_coord, i=idx)
 
     def all_finished(self):
         # Exactly n steps

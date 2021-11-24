@@ -54,7 +54,7 @@ def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
         batch_data["depot"] = batch_data["depot"].to(device)
         # set state-action queue
         sa_queue = queue.Queue()
-        # initialize routing state
+        # initialize return state
         rou_state = rou_agent.re_init(batch_data['loc'])
         # init state
         state = returnState(batch_data)
@@ -62,7 +62,7 @@ def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
             # take action
             action = actionDecode(batch_graph, state)
             # update state
-            state.update(action, state, rou_agent, rou_state)
+            rou_state = state.update(action, rou_agent, rou_state)
             # put into queue
             sa_queue.put((state, action))
             if t >= step - 1:
