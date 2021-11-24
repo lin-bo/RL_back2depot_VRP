@@ -20,18 +20,24 @@ class returnState:
         self._batch = len(batch_data["loc"])
         self._size = len(batch_data["demand"][0])
         self._demand = batch_data["demand"]
+        self._loc = torch.cat((batch_data["depot"].reshape(-1, 1, 2), batch_data["loc"]), axis=1)
 
         # create one hot vectors
         self._one_hot = torch.zeros((self._size + 1, self._size + 1))
         self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1)
 
-        self.v = torch.zeros(self._batch, dtype=torch.float32)
+        self.v = torch.zeros(self._batch, dtype=torch.int32)
         self.c = torch.ones(self._batch, dtype=torch.float32)
         self.o = torch.zeros((self._batch, self._size+1), dtype=torch.float32)
+
+        self.prev_v = self.v.clone()
 
     def update(self, action, rou_agent, rou_state):
         """
         A fuctiion to update state after action
+        return:
+            rou_state: new state for the routing agent
+            reward: (batch, ) tensor specifying the one-step reward for each instance
         """
         # make routing decision
         next_nodes = self._routing_decision(rou_agent, rou_state)
@@ -42,7 +48,9 @@ class returnState:
         # update routing agent state
         rou_state = rou_state.new_update(next_nodes, action)
 
-        return rou_state
+        reward = self._cal_reward()
+
+        return rou_state, reward
 
     def _routing_decision(self, rou_agent, rou_state):
         """
@@ -69,8 +77,25 @@ class returnState:
         """
         Update returning state
         """
-        self.v = (next_nodes + 1) * (1 - action)
+        self.prev_v = self.v.clone()
+        self.v = ((next_nodes + 1) * (1 - action)).to(torch.int32)
         satisfied = self._demand.gather(axis=-1, index=next_nodes.reshape((-1, 1)))[:, 0]
+
         self.c = 1 * action + (self.c - satisfied) * (1 - action)
         self.o += self._one_hot[next_nodes + 1] * (1 - action.reshape((-1, 1)))
         self.o = torch.minimum(self.o, torch.tensor(1))
+
+    def _cal_reward(self):
+        """
+        calculate one-step reward
+        return:
+            (batch, ) tensor (negative value)
+        """
+
+        # get locations
+        idx = torch.cat((self.prev_v.reshape(-1, 1, 1), self.prev_v.reshape(-1, 1, 1)), axis=-1).to(torch.int64)
+        prev_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
+        idx = torch.cat((self.v.reshape(-1, 1, 1), self.v.reshape(-1, 1, 1)), axis=-1).to(torch.int64)
+        curr_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
+
+        return - (prev_loc - curr_loc).norm(dim=-1)
