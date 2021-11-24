@@ -29,12 +29,15 @@ class naiveReturn:
 
         self._batch = len(batch_data["loc"])
         self._demand = batch_data["demand"]
+        self._loc = torch.cat((batch_data["depot"].reshape(-1, 1, 2), batch_data["loc"]), axis=1)
 
         self.v = torch.zeros(self._batch, dtype=torch.int32, device=self.device)
         self.c = torch.ones(self._batch, dtype=torch.float32, device=self.device)
         self.o = torch.zeros((self._batch, self._size + 1), dtype=torch.float32, device=self.device)
 
         self.routes = self.v.clone().reshape((-1, 1))
+        self.dist = torch.zeros(self._batch, dtype=torch.float32, device=self.device)
+        self.prev_v = self.v.clone()
 
     def solve(self, batch_data):
 
@@ -50,8 +53,9 @@ class naiveReturn:
             next_nodes = self._routing_decision(state)
             self._update_return_state(next_nodes, action)
             state = state.new_update(next_nodes, action)
+            self.dist += self._step_dist()
 
-        print(self.routes[0].tolist())
+        print(self.dist.mean())
 
     def _update_return_state(self, next_nodes, action):
         """
@@ -94,3 +98,20 @@ class naiveReturn:
         next_nodes = self.rou_agent._select_node(prob[:, 0, :], mask[:, 0, :])
 
         return next_nodes
+
+    def _step_dist(self):
+        """
+        calculate one-step reward
+        return:
+            (batch, ) tensor (negative value)
+        """
+
+        # get locations
+        idx = torch.cat((self.prev_v.reshape(-1, 1, 1), self.prev_v.reshape(-1, 1, 1)), axis=-1).to(torch.int64)
+        idx = idx.to(self.device)
+        prev_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
+        idx = torch.cat((self.v.reshape(-1, 1, 1), self.v.reshape(-1, 1, 1)), axis=-1).to(torch.int64)
+        idx = idx.to(self.device)
+        curr_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
+
+        return (prev_loc - curr_loc).norm(dim=-1)
