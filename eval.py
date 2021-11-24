@@ -11,9 +11,11 @@ import time
 
 import pandas as pd
 from tqdm import tqdm
+import torch
+from torch.utils.data import DataLoader
 
 from prob import VRPDataset
-from solver import cwHeuristic, sweepHeuristic, googleOR
+from solver import cwHeuristic, sweepHeuristic, googleOR, naiveReturn
 from utils import routesPlot, checkValid
 
 def eval(size, algo, solver_args):
@@ -29,6 +31,7 @@ def eval(size, algo, solver_args):
     print("Load data...")
     print("Graph size: {}".format(size))
     data = VRPDataset(size=size, num_samples=10000)
+    dataloader = DataLoader(data, batch_size=1, shuffle=False)
     print()
     # select solver
     print("Select solver:")
@@ -47,6 +50,12 @@ def eval(size, algo, solver_args):
         solver = googleOR
         print("  Solution limit: {}".format(solver_args[0]))
         args = {"solution_limit":solver_args[0]}
+    if algo == "nr":
+        print("  Naive Return")
+        solver = naiveReturn
+        print("  Capacity threshold: {}".format(solver_args[0]))
+        args = {"thre":solver_args[0]}
+        prob = solver(size=size, thre=args["thre"])
     print()
     # create table
     path = "./res"
@@ -57,19 +66,29 @@ def eval(size, algo, solver_args):
     df = pd.DataFrame(columns=["Obj", "Routes", "Vehicles", "Elapsed"])
     # run
     print("Run solver...")
-    for ins in tqdm(data):
-        # get info
-        depot = ins["depot"].detach().numpy()
-        loc = ins["loc"].detach().numpy()
-        demand = ins["demand"].detach().numpy()
-        # run solver
-        prob = solver(depot, loc, demand)
-        tick = time.time()
-        try:
+    for ins in tqdm(dataloader):
+        if algo == "nr":
+            # cuda
+            device = "cpu"
+            if torch.cuda.is_available():
+                device = "cuda"
+            ins["depot"] = ins["depot"].to(device)
+            ins["loc"] = ins["loc"].to(device)
+            ins["demand"] = ins["demand"].to(device)
+            # run solver
+            tick = time.time()
+            routes, obj = prob.solve(ins)
+            tock = time.time()
+        else:
+            # get info
+            depot = ins["depot"].detach().numpy()[0]
+            loc = ins["loc"].detach().numpy()[0]
+            demand = ins["demand"].detach().numpy()[0]
+            # run solver
+            prob = solver(depot, loc, demand)
+            tick = time.time()
             routes, obj = prob.solve(**args)
-        except:
-            routes, obj = None, None
-        tock = time.time()
+            tock = time.time()
         # check valid
         # assert checkValid(routes, depot, loc, demand), "Infeasible solution."
         # table row
@@ -95,7 +114,7 @@ if __name__ == "__main__":
                         help="graph size")
     parser.add_argument("--algo",
                         type=str,
-                        choices=["cw", "sw", "gg"],
+                        choices=["cw", "sw", "gg", "nr"],
                         help="algorithm")
     parser.add_argument("--args",
                         type=int,

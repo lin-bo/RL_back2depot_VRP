@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# coding: utf-8
+# Author: Bo Lin
+"""
+Naive return
+"""
+
+
 import torch
 from attention_model import load_routing_agent
 
