@@ -62,7 +62,7 @@ def train(model, size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
             # take action
             action = actionDecode(batch_graph, state)
             # update state
-            state = stateUpdate(action)
+            state.update(action, state, rou_agent, rou_state)
             # put into queue
             sa_queue.put((state, action))
             if t >= step - 1:
@@ -88,22 +88,6 @@ def memUpdate(action):
     A fuctiion to update memory
     """
     pass
-
-
-def stateInit():
-    """
-    A function to initialize state
-    """
-    pass
-
-
-def stateUpdate(action, state, rou_agent, rou_state):
-    """
-    A fuctiion to update state after action
-    """
-
-    # make routing decision
-    log_p, mask = rou_agent._get_log_p(rou_agent.fixed, state)
 
 
 def actionDecode(batch_graph, state):
