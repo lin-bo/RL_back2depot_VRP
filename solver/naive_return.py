@@ -12,7 +12,7 @@ from attention_model import load_routing_agent
 
 class naiveReturn:
 
-    def __init__(self, size=20, thre=0.3):
+    def __init__(self, size=20, thre=0.0):
 
         """
         args:
@@ -48,7 +48,13 @@ class naiveReturn:
         self.prev_v = self.v.clone()
 
     def solve(self, batch_data):
-
+        """
+        args:
+            batch_data
+        return:
+            routes: (batch, horizon) tensor
+            dist: (batch, ) tensor
+        """
         # set problem specific parameters
         self._set_params(batch_data)
 
@@ -82,8 +88,9 @@ class naiveReturn:
 
         low_cap = (self.c <= self.thre).to(torch.int32)
         all_served = (self.o.sum(axis=1) >= self._size).to(torch.int32)
+        cant_serve = ((self._demand > self.c.reshape((-1, 1))).sum(axis=1) + self.o.sum(axis=1) == self._size).to(torch.int32)
 
-        return torch.minimum(low_cap + all_served, torch.tensor(1, device=self.device))
+        return torch.minimum(low_cap + all_served + cant_serve, torch.tensor(1, device=self.device))
 
     def _routing_decision(self, rou_state):
         """
