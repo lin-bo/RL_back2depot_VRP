@@ -99,10 +99,10 @@ class returnState:
 
         # get locations
         idx = torch.cat((self.prev_v.reshape(-1, 1, 1), self.prev_v.reshape(-1, 1, 1)), axis=-1).to(torch.int64)
-        idx.to(self.device)
+        idx = idx.to(self.device)
         prev_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
         idx = torch.cat((self.v.reshape(-1, 1, 1), self.v.reshape(-1, 1, 1)), axis=-1).to(torch.int64)
-        idx.to(self.device)
+        idx = idx.to(self.device)
         curr_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
 
         return - (prev_loc - curr_loc).norm(dim=-1)

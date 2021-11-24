@@ -110,7 +110,7 @@ class StateTSP(NamedTuple):
 
         visited_ = self.visited_.scatter_(-1, prev_a[:, :, None], 1)
         visited_ = visited_ * (1 - action.reshape(-1, 1, 1)) + self.visited_ * action.reshape(-1, 1, 1)
-        visited_ = visited_.to(torch.int64)
+        # visited_ = visited_.to(torch.int64)
 
         idx = (self.i + 1) * (1 - action)
 
