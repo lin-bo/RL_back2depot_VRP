@@ -78,9 +78,11 @@ class naiveReturn:
 
     def _get_action(self):
 
-        low_cap = (self.c <= self.thre).to(torch.int32)
-        all_served = (self.o.sum(axis=1) >= self._size).to(torch.int32)
-        cant_serve = ((self._demand > self.c.reshape((-1, 1))).sum(axis=1) + self.o.sum(axis=1) == self._size).to(torch.int32)
+        low_cap = (self.c <= self.thre).to(torch.int32).to(self.device)
+        all_served = (self.o.sum(axis=1) >= self._size).to(torch.int32).to(self.device)
+        cant_serve = ((self._demand > self.c.reshape((-1, 1))).sum(axis=1)
+                      + self.o.sum(axis=1)
+                      == self._size).to(torch.int32).to(self.device)
 
         return torch.minimum(low_cap + all_served + cant_serve, torch.tensor(1, device=self.device))
 
@@ -104,7 +106,7 @@ class naiveReturn:
         # decode the next node to visit (based on the routing agent)
         next_nodes = self.rou_agent._select_node(prob[:, 0, :], mask[:, 0, :])
 
-        return next_nodes
+        return next_nodes.to(self.device)
 
     def _step_dist(self):
         """
