@@ -30,9 +30,9 @@ class returnState:
         self._one_hot = torch.zeros((self._size + 1, self._size + 1))
         self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1).to(self.device)
 
-        self.v = torch.zeros(self._batch, dtype=torch.int32)
-        self.c = torch.ones(self._batch, dtype=torch.float32)
-        self.o = torch.zeros((self._batch, self._size+1), dtype=torch.float32)
+        self.v = torch.zeros(self._batch, dtype=torch.int32, device=self.device)
+        self.c = torch.ones(self._batch, dtype=torch.float32, device=self.device)
+        self.o = torch.zeros((self._batch, self._size+1), dtype=torch.float32, device=self.device)
 
         self.prev_v = self.v.clone()
 
@@ -69,7 +69,6 @@ class returnState:
         # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
 
         flag_demand = self._demand > self.c.reshape((self._batch, 1))
-        flag_demand.to(self.device)
         mask *= flag_demand.reshape((self._batch, 1, -1))
         # normalize the probability
         prob *= ~mask
