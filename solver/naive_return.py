@@ -55,7 +55,7 @@ class naiveReturn:
             state = state.new_update(next_nodes, action)
             self.dist += self._step_dist()
 
-        print(self.dist.mean())
+        return self.routes, self.dist
 
     def _update_return_state(self, next_nodes, action):
         """
