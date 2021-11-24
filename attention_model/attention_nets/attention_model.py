@@ -459,7 +459,12 @@ class AttentionModel(nn.Module):
                                                                                    embeddings.size(-1))
                 ).view(batch_size, 1, -1)
 
+                device = 'cpu'
+                if torch.cuda.is_available():
+                    device = "cuda"
+
                 flag = 1 - torch.tensor(state.i.tolist()).reshape(-1, 1, 1)
+                flag.to(device)
                 out = out1 * flag + out2 * (1 - flag)
 
                 return out
