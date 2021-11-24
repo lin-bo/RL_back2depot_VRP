@@ -459,7 +459,7 @@ class AttentionModel(nn.Module):
                                                                                    embeddings.size(-1))
                 ).view(batch_size, 1, -1)
 
-                device = 'cpu'
+                device = "cpu"
                 if torch.cuda.is_available():
                     device = "cuda"
 

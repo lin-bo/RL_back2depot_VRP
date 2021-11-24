@@ -17,6 +17,10 @@ class returnState:
     """
 
     def __init__(self, batch_data):
+        self.device = "cpu"
+        if torch.cuda.is_available():
+            self.device = "cuda"
+
         self._batch = len(batch_data["loc"])
         self._size = len(batch_data["demand"][0])
         self._demand = batch_data["demand"]
@@ -24,7 +28,7 @@ class returnState:
 
         # create one hot vectors
         self._one_hot = torch.zeros((self._size + 1, self._size + 1))
-        self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1)
+        self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1).to(self.device)
 
         self.v = torch.zeros(self._batch, dtype=torch.int32)
         self.c = torch.ones(self._batch, dtype=torch.float32)
@@ -63,7 +67,9 @@ class returnState:
         log_p, mask = rou_agent._get_log_p(rou_agent.fixed, rou_state)
         prob = log_p.exp()
         # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
+
         flag_demand = self._demand > self.c.reshape((self._batch, 1))
+        flag_demand.to(self.device)
         mask *= flag_demand.reshape((self._batch, 1, -1))
         # normalize the probability
         prob *= ~mask
@@ -79,8 +85,7 @@ class returnState:
         """
         self.prev_v = self.v.clone()
         self.v = ((next_nodes + 1) * (1 - action)).to(torch.int32)
-        satisfied = self._demand.gather(axis=-1, index=next_nodes.reshape((-1, 1)))[:, 0]
-
+        satisfied = self._demand.gather(axis=-1, index=next_nodes.reshape((-1, 1)))[:, 0].to(self.device)
         self.c = 1 * action + (self.c - satisfied) * (1 - action)
         self.o += self._one_hot[next_nodes + 1] * (1 - action.reshape((-1, 1)))
         self.o = torch.minimum(self.o, torch.tensor(1))
@@ -94,8 +99,10 @@ class returnState:
 
         # get locations
         idx = torch.cat((self.prev_v.reshape(-1, 1, 1), self.prev_v.reshape(-1, 1, 1)), axis=-1).to(torch.int64)
+        idx.to(self.device)
         prev_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
         idx = torch.cat((self.v.reshape(-1, 1, 1), self.v.reshape(-1, 1, 1)), axis=-1).to(torch.int64)
+        idx.to(self.device)
         curr_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
 
         return - (prev_loc - curr_loc).norm(dim=-1)
