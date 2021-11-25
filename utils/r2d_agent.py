@@ -6,6 +6,7 @@ Retuen-to-depot agent
 """
 
 import torch
+from torch import optim
 
 from model import QGNN
 
@@ -22,6 +23,8 @@ class returnAgent:
         if torch.cuda.is_available():
             self.device = "cuda"
         self.q_gnn = self.q_gnn.to(self.device)
+        # optimizer
+        self.optim = optim.Adam(self.q_gnn.parameters(), lr=0.0001)
 
     def actionDecode(self, batch_graph, state):
         """
@@ -37,8 +40,9 @@ class returnAgent:
         action_noreturn = torch.ones((batch,1), device=self.device)
         # calculate Q value
         q_r = self.QValue(batch_graph, state, action_return)
-        print(q_r)
         q_n = self.QValue(batch_graph, state, action_noreturn)
+        q = torch.cat((q_r, q_n), 1)
+        return torch.argmax(q, 1).reshape(batch, 1)
 
     def QValue(self, batch_graph, state, action):
         """
@@ -51,3 +55,9 @@ class returnAgent:
         """
         q = self.q_gnn(batch_graph, state, action)
         return q
+
+    def updateModel(self):
+        """
+        A method to update model by SDG
+        """
+        pass

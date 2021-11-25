@@ -75,7 +75,7 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
                 # update memory
                 mem = memUpdate(mem)
                 # update model parameters
-                modelUpdate(model, mem)
+                re_agent.updateModel()
             break
 
 
