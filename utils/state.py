@@ -43,16 +43,12 @@ class returnState:
         """
         # map -1, 1 to 0, 1
         action_flag = ((action + 1) / 2).to(torch.int32).to(self.device)
-
         # make routing decision
         next_nodes = self._routing_decision(rou_agent, rou_state)
-
         # update return agent state
         self._update_return_state(next_nodes, action_flag)
-
         # update routing agent state
         rou_state = rou_state.new_update(next_nodes, action_flag)
-
         # calculate step reward
         reward = self._cal_reward()
 
