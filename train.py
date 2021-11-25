@@ -70,7 +70,7 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
             sa_queue.put((state, action))
             if t >= step - 1:
                 # get reward
-                reward = rewardObtain(list(sa_queue.queue))
+                reward = state.get_nstep_reward(step=step)
                 sa_queue.get()
                 # update memory
                 mem = memUpdate(mem)
@@ -89,13 +89,6 @@ def memInit():
 def memUpdate(action):
     """
     A fuctiion to update memory
-    """
-    pass
-
-
-def rewardObtain(sa_queue):
-    """
-    A function to calculate reward
     """
     pass
 
