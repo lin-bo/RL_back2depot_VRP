@@ -33,8 +33,8 @@ class returnState:
         self.c = torch.ones((self._batch, 1), dtype=torch.float32, device=self.device)
         self.o = torch.zeros((self._batch, self._size+1), dtype=torch.float32, device=self.device)
         self.prev_v = self.v.clone()
-        # recorders
-        self.rewards = torch.zeros((self._batch, 1), dtype=torch.float32, device=self.device)
+        # reward
+        self.r = torch.zeros((self._batch, 1), dtype=torch.float32, device=self.device)
 
     def update(self, action, rou_agent, rou_state):
         """
@@ -52,7 +52,7 @@ class returnState:
         # update routing agent state
         rou_state = rou_state.new_update(next_nodes.reshape((-1, )), action_flag.reshape((-1,)))
         # update reward
-        self._update_reward()
+        self.r = self._cal_reward()
 
         return rou_state
 
@@ -91,7 +91,7 @@ class returnState:
         self.o += self._one_hot[next_nodes + 1][:,0,:] * (1 - action)
         self.o = torch.minimum(self.o, torch.tensor(1, device=self.device))
 
-    def _update_reward(self):
+    def _cal_reward(self):
         """
         calculate one-step reward and update the reward recorder
         """
@@ -103,9 +103,4 @@ class returnState:
         idx = idx.to(torch.int64).to(self.device)
         curr_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
 
-        step_reward = - (prev_loc - curr_loc).norm(dim=-1)
-        self.rewards = torch.cat([self.rewards, step_reward.reshape((-1, 1))], axis=1)
-
-    def get_nstep_reward(self, step=1):
-
-        return self.rewards[:, -step:].sum(axis=1)
+        return - (prev_loc - curr_loc).norm(dim=-1, keepdim=True)

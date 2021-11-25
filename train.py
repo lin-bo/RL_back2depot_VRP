@@ -68,15 +68,16 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
             rou_state = state.update(action, rou_agent, rou_state)
             # put into queue
             sa_queue.put((state, action))
-            if t >= step - 1:
+            if t >= step:
                 # get reward
-                reward = state.get_nstep_reward(step=step) + qvalue
+                reward = rewardCal(step, sa_queue, qvalue)
                 sa_queue.get()
                 # update memory
                 mem = memUpdate(mem)
                 # update model parameters
                 re_agent.updateModel()
             break
+
 
 
 def memInit():
@@ -91,6 +92,19 @@ def memUpdate(action):
     A fuctiion to update memory
     """
     pass
+
+
+def rewardCal(step, queue, qval):
+    """
+    A function to calculate n-step rewards + qval
+    """
+
+    r = torch.zeros(qval.shape, dtype=torch.float32, device=qval.device)
+    for (s, _) in list(queue.queue)[-step - 1: -1]:
+        r += s.r
+
+    return r + qval
+
 
 
 def modelUpdate(model, mem):
