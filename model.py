@@ -8,10 +8,11 @@ Graph neural networks model
 import torch
 from torch import nn
 from torch.nn import functional as f
+import dgl
 import dgl.function as fn
 
 
-class GNN(nn.Module):
+class QGNN(nn.Module):
     """
     This class is gnn
 
@@ -21,7 +22,7 @@ class GNN(nn.Module):
         e_feats (int): dimension of embedding
     """
     def __init__(self, x_feats=2, w_feats=1, e_feats=64):
-        super(GNN, self).__init__()
+        super(QGNN, self).__init__()
         self._x_feats = x_feats
         self._w_feats = w_feats
         self._e_feats = e_feats
@@ -34,11 +35,21 @@ class GNN(nn.Module):
                                      w_feats=self._w_feats,
                                      in_feats=self._e_feats,
                                      out_feats=self._e_feats)
+        self.q_fuction = QFuction(e_feats=self._e_feats)
 
-    def forward(self, graph):
+    def forward(self, graph, state, action):
+        """
+        A method for forward pass
+
+        Args:
+          graph (DGL graph): a batch of graphs
+          state (returnState): enviroment state
+          action(tensor): a bacth of actions
+        """
         h = self.layers1(graph, graph.ndata["x"])
         h = self.layers2(graph, h)
-        return h
+        q = self.q_fuction(graph, h, state, action)
+        return q
 
 
 class structure2Vec(nn.Module):
@@ -67,6 +78,13 @@ class structure2Vec(nn.Module):
                                                  std=1e-2))
 
     def forward(self, graph, feat):
+        """
+        A method for forward pass
+
+        Args:
+          graph (DGL graph): a batch of graphs
+          feat (tensor): a batch of embedding features
+        """
         h = self._xfc(graph.ndata["x"]) + self._aggw(graph) + self._aggf(graph, feat)
         return f.relu(h)
 
@@ -84,3 +102,70 @@ class structure2Vec(nn.Module):
             graph.update_all(fn.copy_u("h", "m"), fn.sum("m", "h_new"))
             h = graph.ndata["h_new"]
             return self._ffc(h)
+
+
+class QFuction(nn.Module):
+    """
+    This class is Q-function
+
+    Args:
+        e_feats (int): dimension of embedding
+    """
+
+    def __init__(self, e_feats=64):
+        super(QFuction, self).__init__()
+        self._e_feats = e_feats
+        # fc
+        self._theta5fc = nn.Linear(self._e_feats*2, 1)
+        self._theta6fc = nn.Linear(self._e_feats, self._e_feats)
+        self._theta7fc = nn.Linear(self._e_feats, self._e_feats)
+        self._theta8fc = nn.Linear(1, self._e_feats)
+        self._theta9fc = nn.Linear(1, self._e_feats)
+
+    def forward(self, graph, feat, state, action):
+        """
+        A method for forward pass
+
+        Args:
+          graph (DGL graph): a batch of graphs
+          feat (tensor): a batch of embedding features
+          state (returnState): enviroment state
+          action(tensor): a bacth of actions
+        """
+        h1 = self._aggnei(graph, feat, state)
+        h2 = self._aggcur(graph, feat, state, action)
+        q = self._theta5fc(torch.cat((h1, h2), 1))
+        return q
+
+    def _aggnei(self, graph, feat, state):
+        cur_nei_feat = self._getCurNeiFeat(graph, feat, state)
+        h = self._theta6fc(cur_nei_feat)
+        return f.relu(h)
+
+    def _getCurNeiFeat(self, graph, feat, state):
+        nei_feat = self._aggf(graph, feat)
+        cur_nei_feat = self._getCurFeat(graph, nei_feat, state.v)
+        return cur_nei_feat.reshape(-1, self._e_feats)
+
+    def _aggf(self, graph, feat):
+        with graph.local_scope():
+            graph.ndata["h"] = feat
+            graph.update_all(fn.copy_u("h", "m"), fn.sum("m", "h_new"))
+            h = graph.ndata["h_new"]
+            return h
+
+    def _aggcur(self, graph, feat, state, action):
+        cur_feat = self._getCurFeat(graph, feat, state.v)
+        h = self._theta7fc(cur_feat) + self._theta8fc(action) + self._theta9fc(state.c)
+        return f.relu(h)
+
+    def _getCurFeat(self, graph, feat, cur_node):
+        feat = self._unbatchFeat(graph, feat)
+        cur_feat = torch.stack([feat[i,v] for i, v in enumerate(cur_node)])
+        return cur_feat.reshape(-1, self._e_feats)
+
+    def _unbatchFeat(self, graph, feat):
+        with graph.local_scope():
+            graph.ndata["h"] = feat
+            feat = torch.stack([g.ndata["h"] for g in dgl.unbatch(graph)])
+            return feat
