@@ -2,7 +2,7 @@
 # coding: utf-8
 # Author: Bo Tang
 """
-calculation
+Calculation
 """
 
 def calObj(routes, dist):
@@ -18,3 +18,12 @@ def calObj(routes, dist):
             prev_ind = ind
         obj += dist[ind, 0]
     return obj
+
+def rewardCal(step, queue, qval):
+    """
+    A function to calculate n-step rewards + qval
+    """
+    r = torch.zeros(qval.shape, dtype=torch.float32, device=qval.device)
+    for (s, _) in list(queue.queue)[-step - 1: -1]:
+        r += s.r
+    return r + qval
