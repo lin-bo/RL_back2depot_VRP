@@ -63,14 +63,14 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
         state = returnState(batch_data)
         for t in range(horizon):
             # take action
-            action = re_agent.actionDecode(batch_graph, state)
+            action, qvalue = re_agent.actionDecode(batch_graph, state)
             # update state
             rou_state, step_reward = state.update(action, rou_agent, rou_state)
             # put into queue
             sa_queue.put((state, action))
             if t >= step - 1:
                 # get reward
-                reward = state.get_nstep_reward(step=step)
+                reward = state.get_nstep_reward(step=step) + qvalue
                 sa_queue.get()
                 # update memory
                 mem = memUpdate(mem)
