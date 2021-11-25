@@ -77,5 +77,5 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
                 # update memory
                 mem.update(re_state_prev, action_prev, reward, re_state)
                 # update model parameters
-                record = mem.sample()
+                record = mem.sample(seed=seed)
                 re_agent.updateModel(record)
