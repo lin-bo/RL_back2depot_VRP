@@ -43,10 +43,14 @@ class returnAgent:
         q_n = self.QValue(batch_graph, state, action_noreturn)
         q = torch.cat((q_r, q_n), 1)
         # max value
-        qmax, qind = torch.max(q, dim=1)
-        action = (qind.to(torch.float32).reshape(batch, 1) - 0.5) * 2
-        qmax = qmax.reshape(batch, 1)
-        return action, qmax
+        qind = torch.argmax(q, dim=1).reshape(batch, 1)
+        # force to not return on depot
+        for i in range(batch):
+            if state.v[i].item() == 0 and torch.all(state.o[i,1:]).item():
+                qind[i,0] = 1
+        action = ((qind - 0.5) * 2).to(torch.int32)
+        qvalue = q.gather(dim=1, index=qind)
+        return action, qvalue
 
     def QValue(self, batch_graph, state, action):
         """
