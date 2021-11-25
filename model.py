@@ -161,7 +161,7 @@ class QFuction(nn.Module):
 
     def _getCurFeat(self, graph, feat, cur_node):
         feat = self._unbatchFeat(graph, feat)
-        cur_feat = torch.stack([feat[i,v] for i, v in enumerate(cur_node)])
+        cur_feat = torch.stack([feat[i,v[0]] for i, v in enumerate(cur_node)])
         return cur_feat.reshape(-1, self._e_feats)
 
     def _unbatchFeat(self, graph, feat):
