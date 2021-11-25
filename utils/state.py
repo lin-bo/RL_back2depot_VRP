@@ -23,11 +23,6 @@ class returnState:
         # original data
         self._batch = len(batch_data["loc"])
         self._size = len(batch_data["demand"][0])
-        self._demand = batch_data["demand"]
-        self._loc = torch.cat((batch_data["depot"].reshape(-1, 1, 2), batch_data["loc"]), axis=1)
-        # create one hot vectors
-        self._one_hot = torch.zeros((self._size + 1, self._size + 1))
-        self._one_hot = self._one_hot.scatter(0, torch.arange(0, self._size + 1).reshape(1, -1), 1).to(self.device)
         # state
         self.v = torch.zeros((self._batch, 1), dtype=torch.int32, device=self.device)
         self.c = torch.ones((self._batch, 1), dtype=torch.float32, device=self.device)
@@ -36,7 +31,7 @@ class returnState:
         # reward
         self.r = torch.zeros((self._batch, 1), dtype=torch.float32, device=self.device)
 
-    def update(self, action, rou_agent, rou_state):
+    def update(self, action, rou_agent, rou_state, batch_data):
         """
         A fuctiion to update state after action
         return:
@@ -45,18 +40,21 @@ class returnState:
         """
         # map -1, 1 to 0, 1
         action_flag = ((action + 1) / 2).to(torch.int32).to(self.device)
+        # get demand and loc info
+        demand = batch_data["demand"]
+        loc = torch.cat((batch_data["depot"].reshape(-1, 1, 2), batch_data["loc"]), axis=1)
         # make routing decision
-        next_nodes = self._routing_decision(rou_agent, rou_state)
+        next_nodes = self._routing_decision(rou_agent, rou_state, demand)
         # update return agent state
-        self._update_return_state(next_nodes, action_flag)
+        self._update_return_state(next_nodes, action_flag, demand)
         # update routing agent state
         rou_state = rou_state.new_update(next_nodes.reshape((-1, )), action_flag.reshape((-1,)))
         # update reward
-        self.r = self._cal_reward()
+        self.r = self._cal_reward(loc)
 
         return rou_state
 
-    def _routing_decision(self, rou_agent, rou_state):
+    def _routing_decision(self, rou_agent, rou_state, demand):
         """
         make routing decisions based on the given routing agent
         return:
@@ -67,7 +65,7 @@ class returnState:
         log_p, mask = rou_agent._get_log_p(rou_agent.fixed, rou_state)
         prob = log_p.exp()
         # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
-        flag_demand = self._demand > self.c
+        flag_demand = demand > self.c
         mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
         # normalize the probability
         prob *= ~mask
@@ -76,31 +74,37 @@ class returnState:
         next_nodes = rou_agent._select_node(prob[:, 0, :], mask[:, 0, :]).reshape(-1, 1)
         return next_nodes
 
-    def _update_return_state(self, next_nodes, action):
+    def _update_return_state(self, next_nodes, action, demand):
         """
         Update returning state
         args:
             next_nodes: (batch, 1)
             action: (batch, 1)
         """
+        # update current location
         self.prev_v = self.v.clone()
         self.v = ((next_nodes + 1) * (1 - action)).to(torch.int32)
-
-        satisfied = self._demand.gather(axis=-1, index=next_nodes).to(self.device)
+        # update capacity
+        satisfied = demand.gather(axis=-1, index=next_nodes).to(self.device)
         self.c = 1 * action + (self.c - satisfied) * (1 - action)
-        self.o += self._one_hot[next_nodes + 1][:,0,:] * (1 - action)
+        # update visit history
+        # create one hot vectors
+        one_hot = torch.zeros((self._size + 1, self._size + 1))
+        one_hot = one_hot.scatter(0, torch.arange(0, self._size + 1).reshape(1, -1), 1).to(self.device)
+
+        self.o += one_hot[next_nodes + 1][:,0,:] * (1 - action)
         self.o = torch.minimum(self.o, torch.tensor(1, device=self.device))
 
-    def _cal_reward(self):
+    def _cal_reward(self, loc):
         """
         calculate one-step reward and update the reward recorder
         """
         # get locations
         idx = torch.cat((self.prev_v.reshape(-1, 1, 1), self.prev_v.reshape(-1, 1, 1)), axis=-1)
         idx = idx.to(torch.int64).to(self.device)
-        prev_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
+        prev_loc = loc.gather(axis=1, index=idx)[:, 0, :]
         idx = torch.cat((self.v.reshape(-1, 1, 1), self.v.reshape(-1, 1, 1)), axis=-1)
         idx = idx.to(torch.int64).to(self.device)
-        curr_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
+        curr_loc = loc.gather(axis=1, index=idx)[:, 0, :]
 
         return - (prev_loc - curr_loc).norm(dim=-1, keepdim=True)

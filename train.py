@@ -65,7 +65,7 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
             # take action
             action, qvalue = re_agent.actionDecode(batch_graph, state)
             # update state
-            rou_state = state.update(action, rou_agent, rou_state)
+            rou_state = state.update(action, rou_agent, rou_state, batch_data)
             # put into queue
             sa_queue.put((state, action))
             if t >= step:
@@ -77,8 +77,6 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
                 # update model parameters
                 re_agent.updateModel()
             break
-
-
 
 def memInit():
     """
