@@ -14,7 +14,7 @@ from tqdm import tqdm
 from dgl.dataloading import GraphDataLoader
 from prob import VRPDGLDataset
 from attention_model import load_routing_agent
-from utils import returnState, returnAgent, rewardCal
+from utils import returnState, returnAgent, replayMem, rewardCal
 
 
 def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
@@ -40,7 +40,7 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     data = VRPDGLDataset(num_samples=num_samples, seed=seed)
     dataloader = GraphDataLoader(data, batch_size=batch)
     # init memory
-    mem = memInit()
+    mem = replayMem(mem_size=1000)
     # set time horizon
     horizon = 2 * size
     # load routing agent
@@ -72,29 +72,10 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
             sa_queue.put((re_state, action))
             if t >= step:
                 # get reward
-                sa_queue.get()
+                re_state_prev, action_prev = sa_queue.get()
                 reward = rewardCal(step, sa_queue)
                 # update memory
-                mem = memUpdate(mem)
+                mem.update(re_state_prev, action_prev, reward, re_state)
                 # update model parameters
-                re_agent.updateModel()
-
-def memInit():
-    """
-    A function to initialize memory
-    """
-    pass
-
-
-def memUpdate(action):
-    """
-    A fuctiion to update memory
-    """
-    pass
-
-
-def modelUpdate(model, mem):
-    """
-    A function to decrease loss with SDG
-    """
-    pass
+                record = mem.sample()
+                re_agent.updateModel(record)
