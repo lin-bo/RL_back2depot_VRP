@@ -40,8 +40,8 @@ class returnAgent:
         action_noreturn = torch.ones((batch,1), device=self.device)
         # calculate Q value
         self.q_gnn.eval()
-        q_r = self.QValue(batch_graph, state, action_return)
-        q_n = self.QValue(batch_graph, state, action_noreturn)
+        q_r = self.q_gnn(batch_graph, state, action_return)
+        q_n = self.q_gnn(batch_graph, state, action_noreturn)
         q = torch.cat((q_r, q_n), 1)
         # max value
         qind = torch.argmax(q, dim=1).reshape(batch, 1)
@@ -53,20 +53,11 @@ class returnAgent:
         qvalue = q.gather(dim=1, index=qind)
         return action, qvalue
 
-    def QValue(self, batch_graph, state, action):
-        """
-        A method to obtain Q-value
-
-        Args:
-          batch_graph (DGL graph): a batch of graphs
-          state (returnState): enviroment state
-          action(tensor): a bacth of actions
-        """
-        q = self.q_gnn(batch_graph, state, action)
-        return q
-
-    def updateModel(self):
+    def updateModel(self, record):
         """
         A method to update model by SDG
+
+        Args:
+          record (namedtuple): a record of MDP steps
         """
         pass
