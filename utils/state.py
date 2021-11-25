@@ -29,13 +29,12 @@ class returnState:
         self._one_hot = torch.zeros((self._size + 1, self._size + 1))
         self._one_hot = self._one_hot.scatter(0, torch.arange(0, self._size + 1).reshape(1, -1), 1).to(self.device)
         # state
-        self.v = torch.zeros((self._batch,1), dtype=torch.int32, device=self.device)
+        self.v = torch.zeros((self._batch, 1), dtype=torch.int32, device=self.device)
         self.c = torch.ones((self._batch, 1), dtype=torch.float32, device=self.device)
         self.o = torch.zeros((self._batch, self._size+1), dtype=torch.float32, device=self.device)
         self.prev_v = self.v.clone()
         # recorders
         self.rewards = torch.zeros((self._batch, 1), dtype=torch.float32, device=self.device)
-        self.routes = self.prev_v.clone()
 
     def update(self, action, rou_agent, rou_state):
         """
@@ -45,13 +44,13 @@ class returnState:
             reward: (batch, ) tensor specifying the one-step reward for each instance
         """
         # map -1, 1 to 0, 1
-        action_flag = ((action.reshape((-1,)) + 1) / 2).to(torch.int32).to(self.device)
+        action_flag = ((action + 1) / 2).to(torch.int32).to(self.device)
         # make routing decision
         next_nodes = self._routing_decision(rou_agent, rou_state)
         # update return agent state
         self._update_return_state(next_nodes, action_flag)
         # update routing agent state
-        rou_state = rou_state.new_update(next_nodes, action_flag.reshape((-1,)))
+        rou_state = rou_state.new_update(next_nodes.reshape((-1, )), action_flag.reshape((-1,)))
         # update reward
         self._update_reward()
 
@@ -80,13 +79,16 @@ class returnState:
     def _update_return_state(self, next_nodes, action):
         """
         Update returning state
+        args:
+            next_nodes: (batch, 1)
+            action: (batch, 1)
         """
         self.prev_v = self.v.clone()
         self.v = ((next_nodes + 1) * (1 - action)).to(torch.int32)
-        self.routes = torch.cat([self.routes, self.v.reshape((-1, 1))], axis=1)
-        satisfied = self._demand.gather(axis=-1, index=next_nodes.reshape((-1, 1))).to(self.device)
+
+        satisfied = self._demand.gather(axis=-1, index=next_nodes).to(self.device)
         self.c = 1 * action + (self.c - satisfied) * (1 - action)
-        self.o += self._one_hot[next_nodes + 1][:,0,:] * (1 - action.reshape((-1, 1)))
+        self.o += self._one_hot[next_nodes + 1][:,0,:] * (1 - action)
         self.o = torch.minimum(self.o, torch.tensor(1, device=self.device))
 
     def _update_reward(self):
