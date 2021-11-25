@@ -29,8 +29,8 @@ class returnState:
         self._one_hot = torch.zeros((self._size + 1, self._size + 1))
         self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1).to(self.device)
         # state
-        self.v = torch.zeros(self._batch, dtype=torch.int32, device=self.device)
-        self.c = torch.ones(self._batch, dtype=torch.float32, device=self.device)
+        self.v = torch.zeros((self._batch,1), dtype=torch.int32, device=self.device)
+        self.c = torch.ones((self._batch, 1), dtype=torch.float32, device=self.device)
         self.o = torch.zeros((self._batch, self._size+1), dtype=torch.float32, device=self.device)
         self.prev_v = self.v.clone()
 
@@ -61,7 +61,7 @@ class returnState:
         log_p, mask = rou_agent._get_log_p(rou_agent.fixed, rou_state)
         prob = log_p.exp()
         # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
-        flag_demand = self._demand > self.c.reshape((self._batch, 1))
+        flag_demand = self._demand > self.c
         mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
         # normalize the probability
         prob *= ~mask
@@ -76,7 +76,7 @@ class returnState:
         """
         self.prev_v = self.v.clone()
         self.v = ((next_nodes + 1) * (1 - action)).to(torch.int32)
-        satisfied = self._demand.gather(axis=-1, index=next_nodes.reshape((-1, 1)))[:, 0].to(self.device)
+        satisfied = self._demand.gather(axis=-1, index=next_nodes.reshape((-1, 1))).to(self.device)
         self.c = 1 * action + (self.c - satisfied) * (1 - action)
         self.o += self._one_hot[next_nodes + 1] * (1 - action.reshape((-1, 1)))
         self.o = torch.minimum(self.o, torch.tensor(1, device=self.device))
