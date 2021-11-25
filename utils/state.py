@@ -29,7 +29,7 @@ class returnState:
         self._one_hot = torch.zeros((self._size + 1, self._size + 1))
         self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1).to(self.device)
         # state
-        self.v = torch.zeros((self._batch,1), dtype=torch.int32, device=self.device)
+        self.v = torch.zeros((self._batch,1), dtype=torch.int64, device=self.device)
         self.c = torch.ones((self._batch, 1), dtype=torch.float32, device=self.device)
         self.o = torch.zeros((self._batch, self._size+1), dtype=torch.float32, device=self.device)
         self.prev_v = self.v.clone()
@@ -88,10 +88,10 @@ class returnState:
             (batch, ) tensor (negative value)
         """
         # get locations
-        idx = torch.cat((self.prev_v.reshape(-1, 1, 1), self.prev_v.reshape(-1, 1, 1)), axis=-1).to(torch.int64)
+        idx = torch.cat((self.prev_v.reshape(-1, 1, 1), self.prev_v.reshape(-1, 1, 1)), axis=-1)
         idx = idx.to(self.device)
         prev_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
-        idx = torch.cat((self.v.reshape(-1, 1, 1), self.v.reshape(-1, 1, 1)), axis=-1).to(torch.int64)
+        idx = torch.cat((self.v.reshape(-1, 1, 1), self.v.reshape(-1, 1, 1)), axis=-1)
         idx = idx.to(self.device)
         curr_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
         return - (prev_loc - curr_loc).norm(dim=-1)
