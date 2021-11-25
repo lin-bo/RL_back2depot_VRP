@@ -13,7 +13,7 @@ import torch
 from dgl.dataloading import GraphDataLoader
 from prob import VRPDGLDataset
 from attention_model import load_routing_agent
-from utils import returnState, returnAgent
+from utils import returnState, returnAgent, rewardCal
 
 
 def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
@@ -70,13 +70,12 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
             sa_queue.put((re_state, action))
             if t >= step:
                 # get reward
-                reward = utils.rewardCal(step, sa_queue)
                 sa_queue.get()
+                reward = rewardCal(step, sa_queue)
                 # update memory
                 mem = memUpdate(mem)
                 # update model parameters
                 re_agent.updateModel()
-            break
 
 def memInit():
     """

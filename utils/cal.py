@@ -5,6 +5,8 @@
 Calculation
 """
 
+import torch
+
 def calObj(routes, dist):
     """
     A function to calculate objective value
@@ -23,7 +25,5 @@ def rewardCal(step, sa_queue):
     """
     A function to calculate n-step rewards + qval
     """
-    r = torch.zeros(qval.shape, dtype=torch.float32, device=qval.device)
-    for (s, _) in list(sa_queue.queue)[-step - 1: -1]:
-        r += s.r
+    r = torch.sum(torch.stack([s.r for s, _ in list(sa_queue.queue)])).detach()
     return r
