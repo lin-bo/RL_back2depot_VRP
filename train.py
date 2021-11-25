@@ -40,7 +40,7 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     data = VRPDGLDataset(num_samples=num_samples, seed=seed)
     dataloader = GraphDataLoader(data, batch_size=batch)
     # init memory
-    mem = replayMem(mem_size=1000)
+    mem = replayMem(mem_size=1000, seed=seed)
     # set time horizon
     horizon = 2 * size
     # load routing agent
@@ -48,7 +48,7 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     rou_agent = load_routing_agent(size=size)
     # initialize return agent
     print("\nLoading return2depot agent...")
-    re_agent = returnAgent(gnn_x_feat=2, gnn_w_feats=1, gnn_e_feats=64)
+    re_agent = returnAgent(gnn_x_feat=2, gnn_w_feats=1, gnn_e_feats=64, gamma=0.99)
     print("\nTraining model...")
     time.sleep(1)
     for batch_data, batch_graph in tqdm(dataloader):
@@ -65,7 +65,7 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
         re_state = returnState(batch_data)
         for t in range(horizon):
             # take action
-            action, _ = re_agent.actionDecode(batch_graph, re_state)
+            action = re_agent.actionDecode(batch_graph, re_state)
             # update state
             re_state, rou_state = re_state.update(action, rou_agent, rou_state, batch_data)
             # put into queue
@@ -77,5 +77,5 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
                 # update memory
                 mem.update(re_state_prev, action_prev, reward, re_state)
                 # update model parameters
-                record = mem.sample(seed=seed)
+                record = mem.sample()
                 re_agent.updateModel(record)
