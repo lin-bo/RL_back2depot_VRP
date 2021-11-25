@@ -30,8 +30,8 @@ class naiveReturn:
         self._size = size
 
         # create one hot vectors
-        self._one_hot = torch.zeros((self._size + 1, self._size + 1))
-        self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1).to(self.device)
+        self._one_hot = torch.zeros((self._size + 1, self._size + 1)).to(self.device)
+        self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1)
 
     def _set_params(self, batch_data):
 

@@ -26,8 +26,8 @@ class returnState:
         self._demand = batch_data["demand"]
         self._loc = torch.cat((batch_data["depot"].reshape(-1, 1, 2), batch_data["loc"]), axis=1)
         # create one hot vectors
-        self._one_hot = torch.zeros((self._size + 1, self._size + 1))
-        self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1).to(self.device)
+        self._one_hot = torch.zeros((self._size + 1, self._size + 1)).to(self.device)
+        self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1)
         # state
         self.v = torch.zeros((self._batch,1), dtype=torch.int64, device=self.device)
         self.c = torch.ones((self._batch, 1), dtype=torch.float32, device=self.device)
