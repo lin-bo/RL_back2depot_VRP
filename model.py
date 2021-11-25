@@ -10,6 +10,7 @@ from torch import nn
 from torch.nn import functional as f
 import dgl
 import dgl.function as fn
+from dgl.nn import SumPooling
 
 def copy_v(edges):
     return {'m': edges.dst['h']}
@@ -88,7 +89,8 @@ class structure2Vec(nn.Module):
           feat (tensor): a batch of embedding features
         """
         h = self._xfc(graph.ndata["x"]) + self._aggw(graph) + self._aggf(graph, feat)
-        return f.relu(h)
+        h = f.relu(h)
+        return h
 
     def _aggw(self, graph):
         with graph.local_scope():
@@ -101,7 +103,7 @@ class structure2Vec(nn.Module):
     def _aggf(self, graph, feat):
         with graph.local_scope():
             graph.ndata["h"] = feat
-            graph.update_all(copy_v, fn.sum("m", "h_new"))
+            graph.update_all(fn.copy_u("h", "m"), fn.sum("m", "h_new"))
             h = graph.ndata["h_new"]
             return self._ffc(h)
 
@@ -117,6 +119,8 @@ class QFuction(nn.Module):
     def __init__(self, e_feats=64):
         super(QFuction, self).__init__()
         self._e_feats = e_feats
+        # pool
+        self.sumpool = SumPooling()
         # fc
         self._theta5fc = nn.Linear(self._e_feats*2, 1)
         self._theta6fc = nn.Linear(self._e_feats, self._e_feats)
@@ -134,32 +138,21 @@ class QFuction(nn.Module):
           state (returnState): enviroment state
           action(tensor): a bacth of actions
         """
-        h1 = self._aggnei(graph, feat, state)
+        h1 = self._agglob(graph, feat, state)
         h2 = self._aggcur(graph, feat, state, action)
-        q = self._theta5fc(torch.cat((h1, h2), 1))
+        h = f.relu(torch.cat((h1, h2), 1))
+        q = self._theta5fc(h)
         return q
 
-    def _aggnei(self, graph, feat, state):
-        cur_nei_feat = self._getCurNeiFeat(graph, feat, state)
-        h = self._theta6fc(cur_nei_feat)
-        return f.relu(h)
-
-    def _getCurNeiFeat(self, graph, feat, state):
-        nei_feat = self._aggf(graph, feat)
-        cur_nei_feat = self._getCurFeat(graph, nei_feat, state.v)
-        return cur_nei_feat.reshape(-1, self._e_feats)
-
-    def _aggf(self, graph, feat):
-        with graph.local_scope():
-            graph.ndata["h"] = feat
-            graph.update_all(copy_v, fn.sum("m", "h_new"))
-            h = graph.ndata["h_new"]
-            return h
+    def _agglob(self, graph, feat, state):
+        feat_sum = self.sumpool(graph, feat)
+        h = self._theta6fc(feat_sum)
+        return h
 
     def _aggcur(self, graph, feat, state, action):
         cur_feat = self._getCurFeat(graph, feat, state.v)
         h = self._theta7fc(cur_feat) + self._theta8fc(action) + self._theta9fc(state.c)
-        return f.relu(h)
+        return h
 
     def _getCurFeat(self, graph, feat, cur_node):
         feat = self._unbatchFeat(graph, feat)
