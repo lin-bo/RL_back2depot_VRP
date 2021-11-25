@@ -138,12 +138,19 @@ class QFuction(nn.Module):
           state (returnState): enviroment state
           action(tensor): a bacth of actions
         """
+        print(graph.ndata["x"])
+        self._updateGraph(graph, state)
+        print(graph.ndata["x"])
         h1 = self._agglob(graph, feat, state)
         h2 = self._aggcur(graph, feat, state, action)
         h = f.relu(torch.cat((h1, h2), 1))
         q = self._theta5fc(h)
         return q
 
+    def _updateGraph(self, graph, state):
+        for i, g in enumerate(dgl.unbatch(graph)):
+            g.ndata["x"][:,0] = torch.ones(state.o[i].shape, device="cuda")
+            
     def _agglob(self, graph, feat, state):
         feat_sum = self.sumpool(graph, feat)
         h = self._theta6fc(feat_sum)
