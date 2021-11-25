@@ -33,8 +33,9 @@ class returnState:
         self.c = torch.ones((self._batch, 1), dtype=torch.float32, device=self.device)
         self.o = torch.zeros((self._batch, self._size+1), dtype=torch.float32, device=self.device)
         self.prev_v = self.v.clone()
-        # reward recorder
+        # recorders
         self.rewards = torch.zeros((self._batch, 1), dtype=torch.float32, device=self.device)
+        self.routes = self.prev_v.clone()
 
     def update(self, action, rou_agent, rou_state):
         """
@@ -82,6 +83,8 @@ class returnState:
         """
         self.prev_v = self.v.clone()
         self.v = ((next_nodes + 1) * (1 - action)).to(torch.int32)
+        self.routes = torch.cat([self.routes, self.v.reshape((-1, 1))], axis=1)
+
         satisfied = self._demand.gather(axis=-1, index=next_nodes.reshape((-1, 1))).to(self.device)
         self.c = 1 * action + (self.c - satisfied)[:, 0] * (1 - action)
         self.c = self.c.reshape((-1, 1))
