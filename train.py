@@ -9,6 +9,7 @@ import queue
 import time
 
 import torch
+from tqdm import tqdm
 
 from dgl.dataloading import GraphDataLoader
 from prob import VRPDGLDataset
@@ -49,7 +50,8 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     print("\nLoading return2depot agent...")
     re_agent = returnAgent(gnn_x_feat=2, gnn_w_feats=1, gnn_e_feats=64)
     print("\nTraining model...")
-    for batch_data, batch_graph in dataloader:
+    time.sleep(1)
+    for batch_data, batch_graph in tqdm(dataloader):
         # to device
         batch_graph = batch_graph.to(device)
         batch_data["loc"] = batch_data["loc"].to(device)
