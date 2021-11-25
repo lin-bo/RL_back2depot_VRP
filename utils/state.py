@@ -27,7 +27,7 @@ class returnState:
         self._loc = torch.cat((batch_data["depot"].reshape(-1, 1, 2), batch_data["loc"]), axis=1)
         # create one hot vectors
         self._one_hot = torch.zeros((self._size + 1, self._size + 1))
-        self._one_hot = self._one_hot.scatter(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1).to(self.device)
+        self._one_hot = self._one_hot.scatter(0, torch.arange(0, self._size + 1).reshape(1, -1), 1).to(self.device)
         # state
         self.v = torch.zeros((self._batch,1), dtype=torch.int32, device=self.device)
         self.c = torch.ones((self._batch, 1), dtype=torch.float32, device=self.device)
@@ -74,7 +74,7 @@ class returnState:
         prob *= ~mask
         prob /= prob.sum(axis=-1, keepdim=True)
         # decode the next node to visit (based on the routing agent)
-        next_nodes = rou_agent._select_node(prob[:, 0, :], mask[:, 0, :])
+        next_nodes = rou_agent._select_node(prob[:, 0, :], mask[:, 0, :]).reshape(-1, 1)
         return next_nodes
 
     def _update_return_state(self, next_nodes, action):
@@ -84,12 +84,9 @@ class returnState:
         self.prev_v = self.v.clone()
         self.v = ((next_nodes + 1) * (1 - action)).to(torch.int32)
         self.routes = torch.cat([self.routes, self.v.reshape((-1, 1))], axis=1)
-
         satisfied = self._demand.gather(axis=-1, index=next_nodes.reshape((-1, 1))).to(self.device)
-        self.c = 1 * action + (self.c - satisfied)[:, 0] * (1 - action)
-        self.c = self.c.reshape((-1, 1))
-
-        self.o += self._one_hot[next_nodes + 1] * (1 - action.reshape((-1, 1)))
+        self.c = 1 * action + (self.c - satisfied) * (1 - action)
+        self.o += self._one_hot[next_nodes + 1][:,0,:] * (1 - action.reshape((-1, 1)))
         self.o = torch.minimum(self.o, torch.tensor(1, device=self.device))
 
     def _update_reward(self):
