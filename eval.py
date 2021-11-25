@@ -92,12 +92,8 @@ def eval(size, algo, solver_args):
         # check valid
         # assert checkValid(routes, depot, loc, demand), "Infeasible solution."
         # table row
-        if routes:
-            routes_str = ";".join([",".join(map(str, r)) for r in routes])
-            num_veh = len(routes)
-        else:
-            routes_str = None
-            num_veh = None
+        routes_str = ";".join([",".join(map(str, r)) for r in routes])
+        num_veh = len(routes)
         elpased = tock - tick
         row = {"Obj":obj, "Routes":routes_str, "Vehicles":num_veh, "Elapsed":elpased}
         df = df.append(row, ignore_index=True)

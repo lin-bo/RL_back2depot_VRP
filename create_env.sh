@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# to get the right reqs file: pipreqs ./spo
-
 # global vars
 VENVS_DIR="PATH_TO_VENV"
 VENV_NAME="rl_vrp"
