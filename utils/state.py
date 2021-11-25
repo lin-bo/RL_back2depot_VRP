@@ -33,7 +33,7 @@ class returnState:
 
     def update(self, action, rou_agent, rou_state, batch_data):
         """
-        A fuctiion to update state after action
+        A method to update state after action
         return:
             rou_state: new state for the routing agent
             reward: (batch, ) tensor specifying the one-step reward for each instance
@@ -46,13 +46,36 @@ class returnState:
         # make routing decision
         next_nodes = self._routing_decision(rou_agent, rou_state, demand)
         # update return agent state
-        self._update_return_state(next_nodes, action_flag, demand)
+        re_state = self._update_return_state(batch_data, next_nodes, action_flag, demand)
         # update routing agent state
         rou_state = rou_state.new_update(next_nodes.reshape((-1, )), action_flag.reshape((-1,)))
         # update reward
-        self.r = self._cal_reward(loc)
+        re_state.r = self._cal_reward(loc)
+        return re_state, rou_state
 
-        return rou_state
+    def _update_return_state(self, batch_data, next_nodes, action, demand):
+        """
+        A method to update returning state
+
+        Args:
+            next_nodes: (batch, 1)
+            action: (batch, 1)
+        """
+        # init new state
+        new_state = returnState(batch_data)
+        # update current location
+        new_state.prev_v = self.v.clone()
+        new_state.v = ((next_nodes + 1) * (1 - action)).to(torch.int32).detach()
+        # update capacity
+        satisfied = demand.gather(axis=-1, index=next_nodes).to(self.device)
+        new_state.c = (1 * action + (self.c - satisfied) * (1 - action)).detach()
+        # create one hot vectors
+        one_hot = torch.zeros((self._size + 1, self._size + 1))
+        one_hot = one_hot.scatter(0, torch.arange(0, self._size + 1).reshape(1, -1), 1).to(self.device)
+        # update visit history
+        new_state.o += one_hot[next_nodes + 1][:,0,:] * (1 - action)
+        new_state.o = torch.minimum(new_state.o, torch.tensor(1, device=self.device)).detach()
+        return new_state
 
     def _routing_decision(self, rou_agent, rou_state, demand):
         """
@@ -73,27 +96,6 @@ class returnState:
         # decode the next node to visit (based on the routing agent)
         next_nodes = rou_agent._select_node(prob[:, 0, :], mask[:, 0, :]).reshape(-1, 1)
         return next_nodes
-
-    def _update_return_state(self, next_nodes, action, demand):
-        """
-        Update returning state
-        args:
-            next_nodes: (batch, 1)
-            action: (batch, 1)
-        """
-        # update current location
-        self.prev_v = self.v.clone()
-        self.v = ((next_nodes + 1) * (1 - action)).to(torch.int32)
-        # update capacity
-        satisfied = demand.gather(axis=-1, index=next_nodes).to(self.device)
-        self.c = 1 * action + (self.c - satisfied) * (1 - action)
-        # update visit history
-        # create one hot vectors
-        one_hot = torch.zeros((self._size + 1, self._size + 1))
-        one_hot = one_hot.scatter(0, torch.arange(0, self._size + 1).reshape(1, -1), 1).to(self.device)
-
-        self.o += one_hot[next_nodes + 1][:,0,:] * (1 - action)
-        self.o = torch.minimum(self.o, torch.tensor(1, device=self.device))
 
     def _cal_reward(self, loc):
         """
