@@ -45,13 +45,13 @@ class returnState:
             reward: (batch, ) tensor specifying the one-step reward for each instance
         """
         # map -1, 1 to 0, 1
-        action_flag = ((action + 1) / 2).to(torch.int32).to(self.device)
+        action_flag = ((action.reshape((-1,)) + 1) / 2).to(torch.int32).to(self.device)
         # make routing decision
         next_nodes = self._routing_decision(rou_agent, rou_state)
         # update return agent state
         self._update_return_state(next_nodes, action_flag)
         # update routing agent state
-        rou_state = rou_state.new_update(next_nodes, action_flag)
+        rou_state = rou_state.new_update(next_nodes, action_flag.reshape((-1,)))
         # update reward
         self._update_reward()
 
