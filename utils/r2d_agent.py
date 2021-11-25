@@ -39,6 +39,7 @@ class returnAgent:
         action_return = - torch.ones((batch,1), device=self.device)
         action_noreturn = torch.ones((batch,1), device=self.device)
         # calculate Q value
+        self.q_gnn.eval()
         q_r = self.QValue(batch_graph, state, action_return)
         q_n = self.QValue(batch_graph, state, action_noreturn)
         q = torch.cat((q_r, q_n), 1)

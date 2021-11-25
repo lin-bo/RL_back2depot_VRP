@@ -19,11 +19,11 @@ def calObj(routes, dist):
         obj += dist[ind, 0]
     return obj
 
-def rewardCal(step, queue, qval):
+def rewardCal(step, sa_queue):
     """
     A function to calculate n-step rewards + qval
     """
     r = torch.zeros(qval.shape, dtype=torch.float32, device=qval.device)
-    for (s, _) in list(queue.queue)[-step - 1: -1]:
+    for (s, _) in list(sa_queue.queue)[-step - 1: -1]:
         r += s.r
-    return r + qval
+    return r
