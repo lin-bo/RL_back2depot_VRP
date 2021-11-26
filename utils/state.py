@@ -44,7 +44,7 @@ class returnState:
             reward: (batch, ) tensor specifying the one-step reward for each instance
         """
         # map -1, 1 to 0, 1
-        action_flag = ((action + 1) / 2).to(torch.int32).to(self.device)
+        action_flag = ((action + 1) / 2).to(torch.int32)
         # get demand and loc info
         demand = batch_data["demand"]
         loc = torch.cat((batch_data["depot"].reshape(-1, 1, 2), batch_data["loc"]), axis=1)
@@ -72,11 +72,11 @@ class returnState:
         new_state.prev_v = self.v.clone()
         new_state.v = ((next_nodes + 1) * (1 - action)).to(torch.int32).detach()
         # update capacity
-        satisfied = demand.gather(axis=-1, index=next_nodes).to(self.device)
+        satisfied = demand.gather(axis=-1, index=next_nodes)
         new_state.c = (1 * action + (self.c - satisfied) * (1 - action)).detach()
         # create one hot vectors
-        one_hot = torch.zeros((self._size + 1, self._size + 1))
-        one_hot = one_hot.scatter(0, torch.arange(0, self._size + 1).reshape(1, -1), 1).to(self.device)
+        one_hot = torch.zeros((self._size + 1, self._size + 1), device=self.device)
+        one_hot = one_hot.scatter(0, torch.arange(0, self._size + 1, device=self.device).reshape(1, -1), 1)
         # update visit history
         new_state.o += one_hot[next_nodes + 1][:,0,:] * (1 - action)
         new_state.o = torch.minimum(new_state.o, torch.tensor(1, device=self.device)).detach()
@@ -113,10 +113,9 @@ class returnState:
         """
         # get locations
         idx = torch.cat((self.prev_v.reshape(-1, 1, 1), self.prev_v.reshape(-1, 1, 1)), axis=-1)
-        idx = idx.to(torch.int64).to(self.device)
+        idx = idx.to(torch.int64)
         prev_loc = loc.gather(axis=1, index=idx)[:, 0, :]
         idx = torch.cat((self.v.reshape(-1, 1, 1), self.v.reshape(-1, 1, 1)), axis=-1)
-        idx = idx.to(torch.int64).to(self.device)
+        idx = idx.to(torch.int64)
         curr_loc = loc.gather(axis=1, index=idx)[:, 0, :]
-
         return - (prev_loc - curr_loc).norm(dim=-1, keepdim=True)
