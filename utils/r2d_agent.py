@@ -53,8 +53,8 @@ class returnAgent:
         action_noreturn = - torch.ones((batch,1), device=self.device)
         action_return = torch.ones((batch,1), device=self.device)
         # calculate Q value
-        q_n = self.q_gnn(batch_graph, state, action_noreturn)
-        q_r = self.q_gnn(batch_graph, state, action_return)
+        q_n = self.q_gnn(state, action_noreturn)
+        q_r = self.q_gnn(state, action_return)
         q = torch.cat((q_n, q_r), 1)
         # max value
         qind = torch.argmax(q, dim=1).reshape(batch, 1)
@@ -62,7 +62,7 @@ class returnAgent:
         for i in range(batch):
             if state.v[i].item() == 0 and not torch.all(state.o[i,1:]).item():
                 qind[i,0] = 0
-        action = ((qind - 0.5) * 2).to(torch.int32)
+        action = (qind - 0.5) * 2
         qvalue = q.gather(dim=1, index=qind)
         return action, qvalue
 
@@ -74,3 +74,5 @@ class returnAgent:
           record (namedtuple): a record of MDP steps
         """
         s_p, a_p, r_pt, s_t = record.s_p, record.a_p, record.r_pt, record.s_t
+        self.q_gnn.train()
+        q_p = self.q_gnn(s_p, a_p)

@@ -40,7 +40,7 @@ class QGNN(nn.Module):
                                      out_feats=self._e_feats)
         self.q_fuction = QFuction(e_feats=self._e_feats)
 
-    def forward(self, graph, state, action):
+    def forward(self, state, action):
         """
         A method for forward pass
 
@@ -49,9 +49,9 @@ class QGNN(nn.Module):
           state (returnState): enviroment state
           action(tensor): a bacth of actions
         """
-        h = self.layers1(graph, graph.ndata["x"])
-        h = self.layers2(graph, h)
-        q = self.q_fuction(graph, h, state, action)
+        h = self.layers1(state.g, state.g.ndata["x"])
+        h = self.layers2(state.g, h)
+        q = self.q_fuction(h, state, action)
         return q
 
 
@@ -128,34 +128,33 @@ class QFuction(nn.Module):
         self._theta8fc = nn.Linear(1, self._e_feats)
         self._theta9fc = nn.Linear(1, self._e_feats)
 
-    def forward(self, graph, feat, state, action):
+    def forward(self, feat, state, action):
         """
         A method for forward pass
 
         Args:
-          graph (DGL graph): a batch of graphs
           feat (tensor): a batch of embedding features
           state (returnState): enviroment state
           action(tensor): a bacth of actions
         """
-        self._updateGraph(graph, state)
-        h1 = self._agglob(graph, feat, state)
-        h2 = self._aggcur(graph, feat, state, action)
+        self._updateGraph(state)
+        h1 = self._agglob(feat, state)
+        h2 = self._aggcur(feat, state, action)
         h = f.relu(torch.cat((h1, h2), 1))
         q = self._theta5fc(h)
         return q
 
-    def _updateGraph(self, graph, state):
-        for i, g in enumerate(dgl.unbatch(graph)):
+    def _updateGraph(self, state):
+        for i, g in enumerate(dgl.unbatch(state.g)):
             g.ndata["x"][:,0] = state.o[i]
 
-    def _agglob(self, graph, feat, state):
-        feat_sum = self.sumpool(graph, feat)
+    def _agglob(self, feat, state):
+        feat_sum = self.sumpool(state.g, feat)
         h = self._theta6fc(feat_sum)
         return h
 
-    def _aggcur(self, graph, feat, state, action):
-        cur_feat = self._getCurFeat(graph, feat, state.v)
+    def _aggcur(self, feat, state, action):
+        cur_feat = self._getCurFeat(state.g, feat, state.v)
         h = self._theta7fc(cur_feat) + self._theta8fc(action) + self._theta9fc(state.c)
         return h
 
