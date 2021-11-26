@@ -20,7 +20,7 @@ class returnAgent:
     """
 
     def __init__(self, gnn_x_feat, gnn_w_feats, gnn_e_feats,
-                 gamma=0.99, lr=1e-4, seed=135, logdir="./logs/"):
+                 gamma=0.99, epsilon=0.1, lr=1e-4, seed=135, logdir="./logs/"):
         # seed
         torch.manual_seed(seed)
         # nn
@@ -32,6 +32,8 @@ class returnAgent:
         self.q_gnn = self.q_gnn.to(self.device)
         # recay rate
         self.gamma = gamma
+        # exploration probability
+        self.epsilon = epsilon
         # optimizer
         self.optim = optim.Adam(self.q_gnn.parameters(), lr=lr)
         # scheduler
@@ -48,19 +50,21 @@ class returnAgent:
         # graph size
         self.size = None
 
-    def actionDecode(self, batch_graph, state):
+    def actionDecode(self, batch_graph, state, explore=False):
         """
         A method to decode action
 
         Args:
           batch_graph (DGL graph): a batch of graphs
           state (returnState): enviroment state
+          explore (boolean): if we want to perform random exploration or not
         """
         self.q_gnn.eval()
-        action, _ = self.getMaxQ(batch_graph, state)
+        action, _ = self.getMaxQ(batch_graph, state, explore)
+
         return action
 
-    def getMaxQ(self, batch_graph, state):
+    def getMaxQ(self, batch_graph, state, explore=False):
         """
         A method to decode action
 
@@ -78,10 +82,14 @@ class returnAgent:
         q = torch.cat((q_n, q_r), 1)
         # max value
         qind = torch.argmax(q, dim=1).reshape(batch, 1)
+        if explore:
+            exp_flag = (torch.rand((batch_graph.batch_size, 1), device=self.device) <= self.epsilon).to(torch.int32)
+            exp_action = torch.randint(0, 2, (batch_graph.batch_size, 1), device=self.device)
+            qind = exp_flag * exp_action + (1 - exp_flag) * qind
         # force to not return on depot
         for i in range(batch):
             if state.v[i].item() == 0 and not torch.all(state.o[i,1:]).item():
-                qind[i,0] = 0
+                qind[i, 0] = 0
         action = (qind - 0.5) * 2
         qvalue = q.gather(dim=1, index=qind)
         return action, qvalue
