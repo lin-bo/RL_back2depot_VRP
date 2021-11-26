@@ -28,6 +28,8 @@ class returnAgent:
         self.gamma = gamma
         # optimizer
         self.optim = optim.Adam(self.q_gnn.parameters(), lr=lr)
+        # scheduler
+        self.scheduler = optim.lr_scheduler.StepLR(self.optim, 1000, gamma=0.95)
         # loss
         self.criterion = nn.MSELoss(reduction="mean")
 
@@ -87,4 +89,5 @@ class returnAgent:
         self.optim.zero_grad()
         loss.backward()
         self.optim.step()
+        self.scheduler.step()
         return loss.item()
