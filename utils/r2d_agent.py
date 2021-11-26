@@ -7,6 +7,7 @@ Retuen-to-depot agent
 
 import torch
 from torch import optim
+from torch import nn
 
 from model import QGNN
 
@@ -23,10 +24,12 @@ class returnAgent:
         if torch.cuda.is_available():
             self.device = "cuda"
         self.q_gnn = self.q_gnn.to(self.device)
-        # optimizer
-        self.optim = optim.Adam(self.q_gnn.parameters(), lr=0.0001)
         # recay rate
         self.gamma = gamma
+        # optimizer
+        self.optim = optim.Adam(self.q_gnn.parameters(), lr=0.0001)
+        # loss
+        self.criterion = nn.MSELoss()
 
     def actionDecode(self, batch_graph, state):
         """
@@ -73,6 +76,15 @@ class returnAgent:
         Args:
           record (namedtuple): a record of MDP steps
         """
+        # calculate loss
         s_p, a_p, r_pt, s_t = record.s_p, record.a_p, record.r_pt, record.s_t
         self.q_gnn.train()
         q_p = self.q_gnn(s_p, a_p)
+        _, max_q_t = self.getMaxQ(s_t.g, s_t)
+        y = r_pt + self.gamma * max_q_t
+        loss = self.criterion(q_p, y)
+        # backward pass
+        self.optim.zero_grad()
+        loss.backward()
+        self.optim.step()
+        return loss.item() / s_t.g.batch_size
