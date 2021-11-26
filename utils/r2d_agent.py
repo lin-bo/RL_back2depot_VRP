@@ -85,8 +85,7 @@ class returnAgent:
         qind = torch.argmax(q, dim=1).reshape(batch, 1)
         if explore:
             exp_flag = (torch.rand((batch_graph.batch_size, 1), device=self.device) <= self.epsilon).to(torch.int32)
-            exp_action = torch.randint(0, 2, (batch_graph.batch_size, 1), device=self.device)
-            qind = exp_flag * exp_action + (1 - exp_flag) * qind
+            qind = exp_flag * (1 - qind) + (1 - exp_flag) * qind
         # force to not return on depot
         for i in range(batch):
             if state.v[i].item() == 0 and not torch.all(state.o[i,1:]).item():
