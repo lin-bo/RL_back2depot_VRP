@@ -62,7 +62,7 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
         # initialize return state
         rou_state = rou_agent.re_init(batch_data['loc'])
         # init state
-        re_state = returnState(batch_data)
+        re_state = returnState(batch_data, batch_graph)
         for t in range(horizon):
             # take action
             action = re_agent.actionDecode(batch_graph, re_state)

@@ -16,13 +16,15 @@ class returnState:
         w_feats (int): dimension of edge weight
     """
 
-    def __init__(self, batch_data):
+    def __init__(self, batch_data, batch_graph):
         self.device = "cpu"
         if torch.cuda.is_available():
             self.device = "cuda"
         # original data
         self._batch = len(batch_data["loc"])
         self._size = len(batch_data["demand"][0])
+        # graph
+        self.g = batch_graph
         # state
         self.v = torch.zeros((self._batch, 1), dtype=torch.int32, device=self.device)
         self.c = torch.ones((self._batch, 1), dtype=torch.float32, device=self.device)
@@ -62,7 +64,7 @@ class returnState:
             action: (batch, 1)
         """
         # init new state
-        new_state = returnState(batch_data)
+        new_state = returnState(batch_data, self.g)
         # update current location
         new_state.prev_v = self.v.clone()
         new_state.v = ((next_nodes + 1) * (1 - action)).to(torch.int32).detach()
