@@ -78,7 +78,7 @@ class returnState:
         one_hot = torch.zeros((self._size + 1, self._size + 1), device=self.device)
         one_hot = one_hot.scatter(0, torch.arange(0, self._size + 1, device=self.device).reshape(1, -1), 1)
         # update visit history
-        new_state.o += one_hot[next_nodes + 1][:,0,:] * (1 - action)
+        new_state.o = self.o + one_hot[next_nodes + 1][:,0,:] * (1 - action)
         new_state.o = torch.minimum(new_state.o, torch.tensor(1, device=self.device)).detach()
         # update graph
         x = self.g.ndata["x"].detach().clone()
