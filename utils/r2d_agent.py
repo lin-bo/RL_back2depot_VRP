@@ -19,7 +19,10 @@ class returnAgent:
     This class is return-to-depot agent
     """
 
-    def __init__(self, gnn_x_feat, gnn_w_feats, gnn_e_feats, gamma, lr):
+    def __init__(self, gnn_x_feat, gnn_w_feats, gnn_e_feats,
+                 gamma=0.99, lr=1e-4, seed=135, logdir="./logs/"):
+        # seed
+        torch.manual_seed(seed)
         # nn
         self.q_gnn = QGNN(x_feats=gnn_x_feat, w_feats=gnn_w_feats, e_feats=gnn_e_feats)
         # cuda
@@ -37,11 +40,13 @@ class returnAgent:
         self.criterion = nn.MSELoss(reduction="mean")
         # tensorboard
         self.cnt = 0
-        self.writer = SummaryWriter(log_dir="./logs")
+        self.writer = SummaryWriter(log_dir=logdir)
         # model dir
-        self.model_dir = "./pretrained"
+        self.model_dir = "./pretrained/"
         if not os.path.isdir(self.model_dir):
             os.makedirs(self.model_dir, exist_ok=True)
+        # graph size
+        self.size = None
 
     def actionDecode(self, batch_graph, state):
         """
@@ -88,8 +93,8 @@ class returnAgent:
         Args:
           record (namedtuple): a record of MDP steps
         """
-        # calculate loss
         s_p, a_p, r_pt, s_t = record.s_p, record.a_p, record.r_pt, record.s_t
+        # calculate loss
         self.q_gnn.train()
         q_p = self.q_gnn(s_p, a_p)
         _, max_q_t = self.getMaxQ(s_t.g, s_t)
@@ -104,3 +109,10 @@ class returnAgent:
         self.writer.add_scalar('Loss', loss.item(), self.cnt)
         self.cnt += 1
         return loss.item()
+
+    def saveModel(self, filename):
+        """
+        A method to save PyTorch model
+        """
+        # save model
+        torch.save(self.q_gnn.state_dict(), self.model_dir+filename)
