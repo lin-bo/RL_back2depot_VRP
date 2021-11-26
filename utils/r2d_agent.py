@@ -5,9 +5,12 @@
 Retuen-to-depot agent
 """
 
+import os
+
 import torch
 from torch import optim
 from torch import nn
+from torch.utils.tensorboard import SummaryWriter
 
 from model import QGNN
 
@@ -32,6 +35,13 @@ class returnAgent:
         self.scheduler = optim.lr_scheduler.StepLR(self.optim, 1000, gamma=0.95)
         # loss
         self.criterion = nn.MSELoss(reduction="mean")
+        # tensorboard
+        self.cnt = 0
+        self.writer = SummaryWriter(log_dir="./logs")
+        # model dir
+        self.model_dir = "./pretrained"
+        if not os.path.isdir(self.model_dir):
+            os.makedirs(self.model_dir, exist_ok=True)
 
     def actionDecode(self, batch_graph, state):
         """
@@ -90,4 +100,7 @@ class returnAgent:
         loss.backward()
         self.optim.step()
         self.scheduler.step()
+        # tensorboard log
+        self.writer.add_scalar('Loss', loss.item(), self.cnt)
+        self.cnt += 1
         return loss.item()
