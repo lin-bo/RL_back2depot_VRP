@@ -11,7 +11,7 @@ sys.path.append("~/projects/def-khalile2/botang/rl_vrp/")
 
 import submitit
 
-from eval import eval
+from eval_baseline import eval
 
 # init parser
 parser = argparse.ArgumentParser()
