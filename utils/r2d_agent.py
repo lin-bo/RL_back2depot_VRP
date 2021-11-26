@@ -16,7 +16,7 @@ class returnAgent:
     This class is return-to-depot agent
     """
 
-    def __init__(self, gnn_x_feat, gnn_w_feats, gnn_e_feats, gamma, lr):
+    def __init__(self, gnn_x_feat, gnn_w_feats, gnn_e_feats, gamma, lr, epsilon):
         # nn
         self.q_gnn = QGNN(x_feats=gnn_x_feat, w_feats=gnn_w_feats, e_feats=gnn_e_feats)
         # cuda
@@ -26,21 +26,28 @@ class returnAgent:
         self.q_gnn = self.q_gnn.to(self.device)
         # recay rate
         self.gamma = gamma
+        # exploration probability
+        self.epsilon = epsilon
         # optimizer
         self.optim = optim.Adam(self.q_gnn.parameters(), lr=lr)
         # loss
         self.criterion = nn.MSELoss()
 
-    def actionDecode(self, batch_graph, state):
+    def actionDecode(self, batch_graph, state, sim=False):
         """
         A method to decode action
 
         Args:
           batch_graph (DGL graph): a batch of graphs
           state (returnState): enviroment state
+          sim (Boolean): if we want to explore with a probability epsilon or not
         """
         self.q_gnn.eval()
         action, _ = self.getMaxQ(batch_graph, state)
+        if sim:
+            sim_flag = (torch.rand(size=(len(batch_graph), 1), device=self.device) <= self.epsilon).to(torch.int32)
+            rand_action = torch.randint(low=0, high=1, size=(len(batch_graph), 1), device=self.device)
+            action = action * (1 - sim_flag) + action * rand_action
         return action
 
     def getMaxQ(self, batch_graph, state):
