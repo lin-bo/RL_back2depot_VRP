@@ -85,10 +85,13 @@ class returnAgent:
         if explore:
             exp_flag = (torch.rand((batch_graph.batch_size, 1), device=self.device) <= self.epsilon).to(torch.int32)
             qind = exp_flag * (1 - qind) + (1 - exp_flag) * qind
-        # force to not return on depot
         for i in range(batch):
+            # force to not return on depot
             if state.v[i].item() == 0 and not torch.all(state.o[i,1:]).item():
                 qind[i, 0] = 0
+            # visited all
+            if torch.all(state.o[i,1:]).item():
+                qind[i, 0] = 1
         action = (qind - 0.5) * 2
         qvalue = q.gather(dim=1, index=qind)
         return action, qvalue
