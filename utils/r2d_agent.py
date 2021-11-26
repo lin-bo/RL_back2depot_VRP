@@ -29,7 +29,7 @@ class returnAgent:
         # optimizer
         self.optim = optim.Adam(self.q_gnn.parameters(), lr=lr)
         # loss
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.MSELoss(reduction="mean")
 
     def actionDecode(self, batch_graph, state):
         """
@@ -87,4 +87,4 @@ class returnAgent:
         self.optim.zero_grad()
         loss.backward()
         self.optim.step()
-        return loss.item() / s_t.g.batch_size
+        return loss.item()
