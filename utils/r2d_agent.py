@@ -71,6 +71,7 @@ class returnAgent:
         Args:
           batch_graph (DGL graph): a batch of graphs
           state (returnState): enviroment state
+          explore (boolean): if we want to perform random exploration or not
         """
         # action choice
         batch = batch_graph.batch_size
