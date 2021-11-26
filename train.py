@@ -48,7 +48,7 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     rou_agent = load_routing_agent(size=size)
     # initialize return agent
     print("\nLoading return2depot agent...")
-    re_agent = returnAgent(gnn_x_feat=2, gnn_w_feats=1, gnn_e_feats=64, gamma=0.99)
+    re_agent = returnAgent(gnn_x_feat=2, gnn_w_feats=1, gnn_e_feats=64, gamma=0.99, lr=lr)
     print("\nTraining model...")
     time.sleep(1)
     pbar = tqdm(dataloader)
@@ -83,6 +83,6 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
                 record = mem.sample()
                 loss = re_agent.updateModel(record)
                 # tqdm log
-                desc = "Iters {}, Loss: {:.4f}".format(iters, loss)
+                desc = "Iter {}, Loss: {:.4f}".format(iters, loss)
                 pbar.set_description(desc)
                 iters += 1

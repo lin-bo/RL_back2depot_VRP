@@ -16,7 +16,7 @@ class returnAgent:
     This class is return-to-depot agent
     """
 
-    def __init__(self, gnn_x_feat, gnn_w_feats, gnn_e_feats, gamma):
+    def __init__(self, gnn_x_feat, gnn_w_feats, gnn_e_feats, gamma, lr):
         # nn
         self.q_gnn = QGNN(x_feats=gnn_x_feat, w_feats=gnn_w_feats, e_feats=gnn_e_feats)
         # cuda
@@ -27,7 +27,7 @@ class returnAgent:
         # recay rate
         self.gamma = gamma
         # optimizer
-        self.optim = optim.Adam(self.q_gnn.parameters(), lr=0.0001)
+        self.optim = optim.Adam(self.q_gnn.parameters(), lr=lr)
         # loss
         self.criterion = nn.MSELoss()
 
