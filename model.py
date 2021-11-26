@@ -137,16 +137,11 @@ class QFuction(nn.Module):
           state (returnState): enviroment state
           action(tensor): a bacth of actions
         """
-        self._updateGraph(state)
         h1 = self._agglob(feat, state)
         h2 = self._aggcur(feat, state, action)
         h = f.relu(torch.cat((h1, h2), 1))
         q = self._theta5fc(h)
-        return q
-
-    def _updateGraph(self, state):
-        for i, g in enumerate(dgl.unbatch(state.g)):
-            g.ndata["x"][:,0] = state.o[i]
+        return q        
 
     def _agglob(self, feat, state):
         feat_sum = self.sumpool(state.g, feat)

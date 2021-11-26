@@ -5,7 +5,10 @@
 Routing state in reinforcement learning
 """
 
+import copy
+
 import torch
+import dgl
 
 class returnState:
     """
@@ -24,7 +27,7 @@ class returnState:
         self._batch = len(batch_data["loc"])
         self._size = len(batch_data["demand"][0])
         # graph
-        self.g = batch_graph
+        self.g = copy.deepcopy(batch_graph)
         # state
         self.v = torch.zeros((self._batch, 1), dtype=torch.int32, device=self.device)
         self.c = torch.ones((self._batch, 1), dtype=torch.float32, device=self.device)
@@ -77,6 +80,11 @@ class returnState:
         # update visit history
         new_state.o += one_hot[next_nodes + 1][:,0,:] * (1 - action)
         new_state.o = torch.minimum(new_state.o, torch.tensor(1, device=self.device)).detach()
+        # update graph
+        x = self.g.ndata["x"].detach().clone()
+        new_state.g.ndata["x"] = x
+        for i, g in enumerate(dgl.unbatch(new_state.g)):
+            g.ndata["x"][:,0] = new_state.o[i]
         return new_state
 
     def _routing_decision(self, rou_agent, rou_state, demand):
