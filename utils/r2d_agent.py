@@ -5,9 +5,12 @@
 Retuen-to-depot agent
 """
 
+import os
+
 import torch
 from torch import optim
 from torch import nn
+from torch.utils.tensorboard import SummaryWriter
 
 from model import QGNN
 
@@ -16,7 +19,10 @@ class returnAgent:
     This class is return-to-depot agent
     """
 
-    def __init__(self, gnn_x_feat, gnn_w_feats, gnn_e_feats, gamma, lr, epsilon):
+    def __init__(self, gnn_x_feat, gnn_w_feats, gnn_e_feats,
+                 gamma=0.99, lr=1e-4, seed=135, logdir="./logs/"):
+        # seed
+        torch.manual_seed(seed)
         # nn
         self.q_gnn = QGNN(x_feats=gnn_x_feat, w_feats=gnn_w_feats, e_feats=gnn_e_feats)
         # cuda
@@ -26,28 +32,32 @@ class returnAgent:
         self.q_gnn = self.q_gnn.to(self.device)
         # recay rate
         self.gamma = gamma
-        # exploration probability
-        self.epsilon = epsilon
         # optimizer
         self.optim = optim.Adam(self.q_gnn.parameters(), lr=lr)
+        # scheduler
+        self.scheduler = optim.lr_scheduler.StepLR(self.optim, 1000, gamma=0.95)
         # loss
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.MSELoss(reduction="mean")
+        # tensorboard
+        self.cnt = 0
+        self.writer = SummaryWriter(log_dir=logdir)
+        # model dir
+        self.model_dir = "./pretrained/"
+        if not os.path.isdir(self.model_dir):
+            os.makedirs(self.model_dir, exist_ok=True)
+        # graph size
+        self.size = None
 
-    def actionDecode(self, batch_graph, state, sim=False):
+    def actionDecode(self, batch_graph, state):
         """
         A method to decode action
 
         Args:
           batch_graph (DGL graph): a batch of graphs
           state (returnState): enviroment state
-          sim (Boolean): if we want to explore with a probability epsilon or not
         """
         self.q_gnn.eval()
         action, _ = self.getMaxQ(batch_graph, state)
-        if sim:
-            sim_flag = (torch.rand(size=(len(batch_graph), 1), device=self.device) <= self.epsilon).to(torch.int32)
-            rand_action = torch.randint(low=0, high=1, size=(len(batch_graph), 1), device=self.device)
-            action = action * (1 - sim_flag) + action * rand_action
         return action
 
     def getMaxQ(self, batch_graph, state):
@@ -83,8 +93,8 @@ class returnAgent:
         Args:
           record (namedtuple): a record of MDP steps
         """
-        # calculate loss
         s_p, a_p, r_pt, s_t = record.s_p, record.a_p, record.r_pt, record.s_t
+        # calculate loss
         self.q_gnn.train()
         q_p = self.q_gnn(s_p, a_p)
         _, max_q_t = self.getMaxQ(s_t.g, s_t)
@@ -94,4 +104,15 @@ class returnAgent:
         self.optim.zero_grad()
         loss.backward()
         self.optim.step()
-        return loss.item() / s_t.g.batch_size
+        self.scheduler.step()
+        # tensorboard log
+        self.writer.add_scalar('Loss', loss.item(), self.cnt)
+        self.cnt += 1
+        return loss.item()
+
+    def saveModel(self, filename):
+        """
+        A method to save PyTorch model
+        """
+        # save model
+        torch.save(self.q_gnn.state_dict(), self.model_dir+filename)

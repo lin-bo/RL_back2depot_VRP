@@ -94,7 +94,7 @@ class structure2Vec(nn.Module):
 
     def _aggw(self, graph):
         with graph.local_scope():
-            g = torch.stack([w * self.weights for w in graph.edata["w"]])
+            g = graph.edata["w"].reshape(-1,1) * self.weights
             graph.edata["g"] = f.relu(g)
             graph.update_all(fn.copy_e("g", "m"), fn.sum("m", "h_new"))
             h = graph.ndata["h_new"]
@@ -141,7 +141,7 @@ class QFuction(nn.Module):
         h2 = self._aggcur(feat, state, action)
         h = f.relu(torch.cat((h1, h2), 1))
         q = self._theta5fc(h)
-        return q        
+        return q
 
     def _agglob(self, feat, state):
         feat_sum = self.sumpool(state.g, feat)
@@ -155,11 +155,9 @@ class QFuction(nn.Module):
 
     def _getCurFeat(self, graph, feat, cur_node):
         feat = self._unbatchFeat(graph, feat)
-        cur_feat = torch.stack([feat[i,v[0]] for i, v in enumerate(cur_node)])
+        ind = cur_node.repeat(1, self._e_feats).reshape(-1, 1, self._e_feats).to(torch.int64)
+        cur_feat = feat.gather(dim=1, index=ind)
         return cur_feat.reshape(-1, self._e_feats)
 
     def _unbatchFeat(self, graph, feat):
-        with graph.local_scope():
-            graph.ndata["h"] = feat
-            feat = torch.stack([g.ndata["h"] for g in dgl.unbatch(graph)])
-            return feat
+        return feat.reshape(graph.batch_size, -1, self._e_feats)

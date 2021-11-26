@@ -10,14 +10,14 @@ import time
 
 import torch
 from tqdm import tqdm
-
 from dgl.dataloading import GraphDataLoader
+
 from prob import VRPDGLDataset
 from attention_model import load_routing_agent
 from utils import returnState, returnAgent, replayMem, rewardCal
 
 
-def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
+def train(size, step=1, lr=1e-4, batch=64, num_samples=1000, seed=135):
     """
     A function to train back2depot DQN
 
@@ -37,7 +37,7 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     # load dataset
     print("\nGenerating dataset...")
     time.sleep(1)
-    data = VRPDGLDataset(num_samples=num_samples, seed=seed)
+    data = VRPDGLDataset(size=size, num_samples=num_samples, seed=seed)
     dataloader = GraphDataLoader(data, batch_size=batch)
     # init memory
     mem = replayMem(mem_size=1000, seed=seed)
@@ -48,7 +48,13 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
     rou_agent = load_routing_agent(size=size)
     # initialize return agent
     print("\nLoading return2depot agent...")
-    re_agent = returnAgent(gnn_x_feat=2, gnn_w_feats=1, gnn_e_feats=64, gamma=0.99, lr=lr)
+    re_agent = returnAgent(gnn_x_feat=2,
+                           gnn_w_feats=1,
+                           gnn_e_feats=64,
+                           gamma=0.99,
+                           lr=lr,
+                           seed=seed,
+                           logdir="./logs/{}/".format(size))
     print("\nTraining model...")
     time.sleep(1)
     pbar = tqdm(dataloader)
@@ -86,3 +92,8 @@ def train(size, step=10, lr=1e-4, batch=64, num_samples=1000, seed=135):
                 desc = "Iter {}, Loss: {:.4f}".format(iters, loss)
                 pbar.set_description(desc)
                 iters += 1
+    # save model
+    filename = "vrp-{}.pkl".format(size)
+    print("\nSaving model...")
+    print("  ./pretrained/{}".format(filename))
+    re_agent.saveModel(filename)
