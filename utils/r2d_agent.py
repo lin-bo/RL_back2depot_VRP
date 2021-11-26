@@ -61,7 +61,6 @@ class returnAgent:
         """
         self.q_gnn.eval()
         action, _ = self.getMaxQ(batch_graph, state, explore)
-
         return action
 
     def getMaxQ(self, batch_graph, state, explore=False):
@@ -124,3 +123,10 @@ class returnAgent:
         """
         # save model
         torch.save(self.q_gnn.state_dict(), self.model_dir+filename)
+
+    def loadModel(self, path):
+        """
+        A method to load PyTorch model
+        """
+        checkpoint = torch.load(path)
+        self.q_gnn.load_state_dict(checkpoint)
