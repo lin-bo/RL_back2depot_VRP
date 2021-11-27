@@ -462,10 +462,10 @@ class AttentionModel(nn.Module):
                 if torch.cuda.is_available():
                     device = "cuda"
 
-                # flag = 1 - torch.tensor(state.i.tolist()).reshape(-1, 1, 1)
-                # flag = flag.to(device)
-                # out = out1 * flag + out2 * (1 - flag)
-                out = torch.cat([state.depot_emb, out2], axis=-1)
+                if state.i.item() == 0:
+                    out = torch.cat([state.depot_emb, state.depot_emb], axis=-1)
+                else:
+                    out = torch.cat([state.depot_emb, out2], axis=-1)
 
                 return out
 
