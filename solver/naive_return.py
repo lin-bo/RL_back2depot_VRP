@@ -66,6 +66,7 @@ class naiveReturn:
             next_nodes = self._routing_decision(state)
             self._update_return_state(next_nodes, action)
             state = state.new_update(next_nodes, action)
+            # state = state.update(next_nodes)
             self.dist += self._step_dist()
         routes = self._covert_routes()
         return routes, self.dist.detach().cpu().item()
