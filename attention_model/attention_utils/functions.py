@@ -150,7 +150,7 @@ def sample_many(inner_func, get_cost_func, input, batch_rep=1, iter_rep=1):
     return minpis, mincosts
 
 
-def load_routing_agent(size):
+def load_routing_agent(size, name='tsp'):
     """
     Load the routing agent (pretrained TSP models from Kool et al.)
     Args:
@@ -161,7 +161,7 @@ def load_routing_agent(size):
         msg = 'No pre-trained tsp model for the given size {}, please use 20, 50, or 100'.format(size)
         raise ValueError(msg)
 
-    model, _ = load_model('./attention_model/pretrained_tsp/tsp_{}'.format(size))
+    model, _ = load_model('./attention_model/pretrained_{}/{}_{}'.format(name, name, size))
     use_cuda = torch.cuda.is_available()  # and not opts.no_cuda
     device = torch.device('cuda' if use_cuda else 'cpu')
     model.to(device)
