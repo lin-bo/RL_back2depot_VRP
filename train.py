@@ -39,13 +39,14 @@ def train(size, step=1, lr=1e-4, batch=64, num_samples=1000, seed=135):
     time.sleep(1)
     data = VRPDGLDataset(size=size, num_samples=num_samples, seed=seed)
     dataloader = GraphDataLoader(data, batch_size=batch)
+    rou_agent_name = 'tsp'
     # init memory
     mem = replayMem(mem_size=1000, seed=seed)
     # set time horizon
     horizon = 2 * size
     # load routing agent
     print("\nLoading routing agent...")
-    rou_agent = load_routing_agent(size=size)
+    rou_agent = load_routing_agent(size=size, name=rou_agent_name)
     # initialize return agent
     print("\nLoading return2depot agent...")
     re_agent = returnAgent(gnn_x_feat=2,
@@ -70,9 +71,9 @@ def train(size, step=1, lr=1e-4, batch=64, num_samples=1000, seed=135):
         # set state-action queue
         sa_queue = queue.Queue()
         # initialize return state
-        rou_state = rou_agent.re_init(batch_data['loc'], batch_data["depot"])
+        rou_state = rou_agent.re_init(batch_data)
         # init state
-        re_state = returnState(batch_data, batch_graph)
+        re_state = returnState(batch_data, batch_graph, rou_agent_name)
         for t in range(horizon):
             # take action
             action = re_agent.actionDecode(batch_graph, re_state, explore=True)
