@@ -452,7 +452,7 @@ class AttentionModel(nn.Module):
                 #     ).view(batch_size, 1, -1)
 
                 # out1 = self.W_placeholder[None, None, :].expand(batch_size, 1, self.W_placeholder.size(-1))
-                out2 = embeddings.gather(
+                out0 = embeddings.gather(
                     1,
                     current_node[:, :, None].expand(batch_size, 1, embeddings.size(-1))
                     # torch.cat((current_node), 1)[:, :, None].expand(batch_size, 2, embeddings.size(-1))
@@ -462,10 +462,14 @@ class AttentionModel(nn.Module):
                 if torch.cuda.is_available():
                     device = "cuda"
 
-                if state.i.item() == 0:
-                    out = torch.cat([state.depot_emb, state.depot_emb], axis=-1)
-                else:
-                    out = torch.cat([state.depot_emb, out2], axis=-1)
+                flag = (state.i == 0).to(torch.int32).reshape((-1, 1, 1))
+                # if state.i.item() == 0:
+                out1 = torch.cat([state.depot_emb, state.depot_emb], axis=-1)
+                out2 = torch.cat([state.depot_emb, out0], axis=-1)
+
+                print(flag.shape, out1.shape, out2.shape)
+
+                out = flag * out1 + (1 - flag) * out2
 
                 return out
 

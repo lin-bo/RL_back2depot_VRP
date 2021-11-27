@@ -161,6 +161,7 @@ def load_routing_agent(size, name='tsp'):
         msg = 'No pre-trained tsp model for the given size {}, please use 20, 50, or 100'.format(size)
         raise ValueError(msg)
 
+    print(name)
     model, _ = load_model('./attention_model/pretrained_{}/{}_{}'.format(name, name, size))
     use_cuda = torch.cuda.is_available()  # and not opts.no_cuda
     device = torch.device('cuda' if use_cuda else 'cpu')
