@@ -51,7 +51,7 @@ class returnState:
         # map -1, 1 to 0, 1
         action_flag = ((action + 1) / 2).to(torch.int32)
         # make routing decision
-        next_nodes = self._routing_decision(rou_agent, rou_state, demand)
+        next_nodes, mask = self._routing_decision(rou_agent, rou_state, demand)
         # update return agent state
         re_state = self._update_return_state(batch_data, next_nodes, action_flag, demand)
         # update routing agent state
@@ -89,7 +89,8 @@ class returnState:
             # update capacity
             zero = torch.zeros((self._batch, 1), dtype=torch.int32, device=self.device)
             satisfied = demand.gather(axis=-1, index=torch.maximum(next_nodes-1, zero)) * (next_nodes != 0)
-            new_state.c = (1 * action + (self.c - satisfied) * (1 - action)).detach()
+            back_flag = (new_state.v == 0).to(torch.int32).to(self.device)
+            new_state.c = (1 * back_flag + (self.c - satisfied) * (1 - back_flag)).detach()
             # update visit history
             new_state.o = self.o + one_hot[next_nodes][:, 0, :] * (1 - action)
             new_state.o = torch.minimum(new_state.o, torch.tensor(1, device=self.device)).detach()
@@ -128,7 +129,7 @@ class returnState:
             prob /= prob.sum(axis=-1, keepdim=True)
             # decode the next node to visit (based on the routing agent)
         next_nodes = rou_agent._select_node(prob[:, 0, :], mask[:, 0, :]).reshape(-1, 1)
-        return next_nodes
+        return next_nodes, mask
 
     def _cal_reward(self, loc):
         """
