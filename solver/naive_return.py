@@ -60,7 +60,7 @@ class naiveReturn:
         self._set_params(batch_data)
 
         # initialize the state of routing agent
-        state = self.rou_agent.re_init(batch_data["loc"], batch_data["depot"])
+        state = self.rou_agent.re_init(batch_data)
         # sequentially generate the solutions
         for t in range(self.horizon):
             action = self._get_action()
