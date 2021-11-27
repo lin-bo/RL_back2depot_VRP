@@ -467,8 +467,6 @@ class AttentionModel(nn.Module):
                 out1 = torch.cat([state.depot_emb, state.depot_emb], axis=-1)
                 out2 = torch.cat([state.depot_emb, out0], axis=-1)
 
-                print(flag.shape, out1.shape, out2.shape)
-
                 out = flag * out1 + (1 - flag) * out2
 
                 return out
