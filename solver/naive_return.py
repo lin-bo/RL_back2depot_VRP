@@ -38,6 +38,7 @@ class naiveReturn:
         self._batch = len(batch_data["loc"])
         self._demand = batch_data["demand"]
         self._loc = torch.cat((batch_data["depot"].reshape(-1, 1, 2), batch_data["loc"]), axis=1)
+        self._first_step = True
 
         self.v = torch.zeros(self._batch, dtype=torch.int32, device=self.device)
         self.c = torch.ones(self._batch, dtype=torch.float32, device=self.device)
@@ -114,6 +115,13 @@ class naiveReturn:
             note that if all the customers have already been served, the returned node will always be 1
         """
         # make routing decision
+
+        if self._first_step:
+            c2d_dist = self._cal_c2d_dist()
+            next_nodes = torch.argmin(c2d_dist, axis=1)
+            self._first_step = False
+            return next_nodes
+
         log_p, mask = self.rou_agent._get_log_p(self.rou_agent.fixed, rou_state)
         prob = log_p.exp()
         # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
@@ -142,3 +150,8 @@ class naiveReturn:
         curr_loc = self._loc.gather(axis=1, index=idx)[:, 0, :]
 
         return (prev_loc - curr_loc).norm(dim=-1)
+
+    def _cal_c2d_dist(self):
+
+        rel_loc = self._loc[:, 1:, :] - self._loc[:, [0], :]
+        return rel_loc.norm(dim=-1)
