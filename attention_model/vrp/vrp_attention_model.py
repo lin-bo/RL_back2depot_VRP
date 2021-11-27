@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-# Author: Wouter Kool & Bo Lin
-
 import torch
 from torch import nn
 from torch.utils.checkpoint import checkpoint
@@ -13,7 +9,6 @@ from attention_model.attention_nets.graph_encoder import GraphAttentionEncoder
 from torch.nn import DataParallel
 from attention_model.attention_utils.beam_search import CachedLookup
 from attention_model.attention_utils.functions import sample_many
-
 
 def set_decode_type(model, decode_type):
     if isinstance(model, DataParallel):
@@ -91,14 +86,14 @@ class AttentionModel(nn.Module):
 
             # Special embedding projection for depot node
             self.init_embed_depot = nn.Linear(2, embedding_dim)
-
+            
             if self.is_vrp and self.allow_partial:  # Need to include the demand if split delivery allowed
                 self.project_node_step = nn.Linear(1, 3 * embedding_dim, bias=False)
         else:  # TSP
             assert problem.NAME == "tsp", "Unsupported problem: {}".format(problem.NAME)
             step_context_dim = 2 * embedding_dim  # Embedding of first and last node
             node_dim = 2  # x, y
-
+            
             # Learned input symbols for first action
             self.W_placeholder = nn.Parameter(torch.Tensor(2 * embedding_dim))
             self.W_placeholder.data.uniform_(-1, 1)  # Placeholder should be in range of activations
@@ -206,9 +201,9 @@ class AttentionModel(nn.Module):
 
         if self.is_vrp or self.is_orienteering or self.is_pctsp:
             if self.is_vrp:
-                features = ('demand',)
+                features = ('demand', )
             elif self.is_orienteering:
-                features = ('prize',)
+                features = ('prize', )
             else:
                 assert self.is_pctsp
                 features = ('deterministic_prize', 'penalty')
@@ -278,16 +273,20 @@ class AttentionModel(nn.Module):
         # Collected lists, return Tensor
         return torch.stack(outputs, 1), torch.stack(sequences, 1)
 
+
     def re_init(self, batch_data):
         """
         initialize the routing state, embedding, fixed given the input
         """
 
-        self.embeddings, _ = self.embedder(self._init_embed(batch_data["loc"]))
-        depot_emb, _ = self.embedder(self._init_embed(batch_data["depot"].reshape((-1, 1, 2))))
+        device = "cpu"
+        if torch.cuda.is_available():
+            device = "cuda"
+
+        self.embeddings, _ = self.embedder(self._init_embed(batch_data))
         self.fixed = self._precompute(self.embeddings)
 
-        state = self.problem.make_state(batch_data["loc"], depot_emb)
+        state = self.problem.make_state(batch_data)
 
         return state
 
@@ -307,12 +306,12 @@ class AttentionModel(nn.Module):
 
     def _select_node(self, probs, mask):
 
-        # assert (probs == probs).all(), "Probs should not contain any nans"
+        assert (probs == probs).all(), "Probs should not contain any nans"
 
         if self.decode_type == "greedy":
             _, selected = probs.max(1)
-            # assert not mask.gather(1, selected.unsqueeze(
-            #     -1)).data.any(), "Decode greedy: infeasible action has maximum probability"
+            assert not mask.gather(1, selected.unsqueeze(
+                -1)).data.any(), "Decode greedy: infeasible action has maximum probability"
 
         elif self.decode_type == "sampling":
             selected = probs.multinomial(1).squeeze(1)
@@ -377,14 +376,14 @@ class AttentionModel(nn.Module):
         if normalize:
             log_p = torch.log_softmax(log_p / self.temp, dim=-1)
 
-        # assert not torch.isnan(log_p).any()
+        assert not torch.isnan(log_p).any()
 
         return log_p, mask
 
     def _get_parallel_step_context(self, embeddings, state, from_depot=False):
         """
         Returns the context per step, optionally for multiple steps at once (for efficient evaluation of the model)
-
+        
         :param embeddings: (batch_size, graph_size, embed_dim)
         :param prev_a: (batch_size, num_steps)
         :param first_a: Only used when num_steps = 1, action of first step or None if first step
@@ -440,38 +439,17 @@ class AttentionModel(nn.Module):
                 -1
             )
         else:  # TSP
+        
             if num_steps == 1:  # We need to special case if we have only 1 step, may be the first or not
-                # if state.i.item() == 0:
-                #     # First and only step, ignore prev_a (this is a placeholder)
-                #     return self.W_placeholder[None, None, :].expand(batch_size, 1, self.W_placeholder.size(-1))
-                # else:
-                #     return embeddings.gather(
-                #         1,
-                #         torch.cat((state.first_a, current_node), 1)[:, :, None].expand(batch_size, 2,
-                #                                                                        embeddings.size(-1))
-                #     ).view(batch_size, 1, -1)
-
-                # out1 = self.W_placeholder[None, None, :].expand(batch_size, 1, self.W_placeholder.size(-1))
-                out0 = embeddings.gather(
-                    1,
-                    current_node[:, :, None].expand(batch_size, 1, embeddings.size(-1))
-                    # torch.cat((current_node), 1)[:, :, None].expand(batch_size, 2, embeddings.size(-1))
-                ).view(batch_size, 1, -1)
-
-                device = "cpu"
-                if torch.cuda.is_available():
-                    device = "cuda"
-
-                flag = (state.i == 0).to(torch.int32).reshape((-1, 1, 1))
-                # if state.i.item() == 0:
-                out1 = torch.cat([state.depot_emb, state.depot_emb], axis=-1)
-                out2 = torch.cat([state.depot_emb, out0], axis=-1)
-
-                out = flag * out1 + (1 - flag) * out2
-
-                return out
-
-                # More than one step, assume always starting with first
+                if state.i.item() == 0:
+                    # First and only step, ignore prev_a (this is a placeholder)
+                    return self.W_placeholder[None, None, :].expand(batch_size, 1, self.W_placeholder.size(-1))
+                else:
+                    return embeddings.gather(
+                        1,
+                        torch.cat((state.first_a, current_node), 1)[:, :, None].expand(batch_size, 2, embeddings.size(-1))
+                    ).view(batch_size, 1, -1)
+            # More than one step, assume always starting with first
             embeddings_per_step = embeddings.gather(
                 1,
                 current_node[:, 1:, None].expand(batch_size, num_steps - 1, embeddings.size(-1))
@@ -525,6 +503,7 @@ class AttentionModel(nn.Module):
     def _get_attention_node_data(self, fixed, state):
 
         if self.is_vrp and self.allow_partial:
+
             # Need to provide information of how much each node has already been served
             # Clone demands as they are needed by the backprop whereas they are updated later
             glimpse_key_step, glimpse_val_step, logit_key_step = \
@@ -545,6 +524,6 @@ class AttentionModel(nn.Module):
 
         return (
             v.contiguous().view(v.size(0), v.size(1), v.size(2), self.n_heads, -1)
-                .expand(v.size(0), v.size(1) if num_steps is None else num_steps, v.size(2), self.n_heads, -1)
-                .permute(3, 0, 1, 2, 4)  # (n_heads, batch_size, num_steps, graph_size, head_dim)
+            .expand(v.size(0), v.size(1) if num_steps is None else num_steps, v.size(2), self.n_heads, -1)
+            .permute(3, 0, 1, 2, 4)  # (n_heads, batch_size, num_steps, graph_size, head_dim)
         )

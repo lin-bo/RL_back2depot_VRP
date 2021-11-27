@@ -3,9 +3,9 @@ import torch
 import os
 import pickle
 
-from problems.vrp.state_cvrp import StateCVRP
-from problems.vrp.state_sdvrp import StateSDVRP
-from utils.beam_search import beam_search
+from attention_model.vrp.state_cvrp import StateCVRP
+from attention_model.vrp.state_sdvrp import StateSDVRP
+from attention_model.attention_utils.beam_search import beam_search
 
 
 class CVRP(object):

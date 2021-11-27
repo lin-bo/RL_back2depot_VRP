@@ -19,7 +19,7 @@ class returnState:
         w_feats (int): dimension of edge weight
     """
 
-    def __init__(self, batch_data, batch_graph):
+    def __init__(self, batch_data, batch_graph, rou_name='tsp'):
         self.device = "cpu"
         if torch.cuda.is_available():
             self.device = "cuda"
@@ -35,6 +35,8 @@ class returnState:
         self.prev_v = self.v.clone()
         # reward
         self.r = torch.zeros((self._batch, 1), dtype=torch.float32, device=self.device)
+        # agent name
+        self.name = rou_name
 
     def update(self, action, rou_agent, rou_state, batch_data):
         """
@@ -45,6 +47,7 @@ class returnState:
         """
         # map -1, 1 to 0, 1
         action_flag = ((action + 1) / 2).to(torch.int32)
+
         # get demand and loc info
         demand = batch_data["demand"]
         loc = torch.cat((batch_data["depot"].reshape(-1, 1, 2), batch_data["loc"]), axis=1)
@@ -53,7 +56,7 @@ class returnState:
         # update return agent state
         re_state = self._update_return_state(batch_data, next_nodes, action_flag, demand)
         # update routing agent state
-        rou_state = rou_state.new_update(next_nodes.reshape((-1, )), action_flag.reshape((-1,)))
+        rou_state = self._update_rou_state(rou_state, next_nodes, action_flag)
         # update reward
         re_state.r = self._cal_reward(loc)
         return re_state, rou_state
@@ -67,25 +70,45 @@ class returnState:
             action: (batch, 1)
         """
         # init new state
-        new_state = returnState(batch_data, self.g)
-        # update current location
+        new_state = returnState(batch_data, self.g, self.name)
         new_state.prev_v = self.v.clone()
-        new_state.v = ((next_nodes + 1) * (1 - action)).to(torch.int32).detach()
-        # update capacity
-        satisfied = demand.gather(axis=-1, index=next_nodes)
-        new_state.c = (1 * action + (self.c - satisfied) * (1 - action)).detach()
         # create one hot vectors
         one_hot = torch.zeros((self._size + 1, self._size + 1), device=self.device)
         one_hot = one_hot.scatter(0, torch.arange(0, self._size + 1, device=self.device).reshape(1, -1), 1)
-        # update visit history
-        new_state.o = self.o + one_hot[next_nodes + 1][:,0,:] * (1 - action)
-        new_state.o = torch.minimum(new_state.o, torch.tensor(1, device=self.device)).detach()
+        if self.name == 'tsp':
+            # update current location
+            new_state.v = ((next_nodes + 1) * (1 - action)).to(torch.int32).detach()
+            # update capacity
+            satisfied = demand.gather(axis=-1, index=next_nodes)
+            new_state.c = (1 * action + (self.c - satisfied) * (1 - action)).detach()
+            # update visit history
+            new_state.o = self.o + one_hot[next_nodes + 1][:,0,:] * (1 - action)
+            new_state.o = torch.minimum(new_state.o, torch.tensor(1, device=self.device)).detach()
+        else:
+            # update current location
+            new_state.v = ((next_nodes) * (1 - action)).to(torch.int32).detach()
+            # update capacity
+            zero = torch.zeros((self._batch, 1), dtype=torch.int32, device=self.device)
+            satisfied = demand.gather(axis=-1, index=torch.maximum(next_nodes-1, zero)) * (next_nodes != 0)
+            new_state.c = (1 * action + (self.c - satisfied) * (1 - action)).detach()
+            # update visit history
+            new_state.o = self.o + one_hot[next_nodes][:, 0, :] * (1 - action)
+            new_state.o = torch.minimum(new_state.o, torch.tensor(1, device=self.device)).detach()
         # update graph
         x = self.g.ndata["x"].detach().clone()
         new_state.g.ndata["x"] = x
         for i, g in enumerate(dgl.unbatch(new_state.g)):
-            g.ndata["x"][:,0] = new_state.o[i]
+            g.ndata["x"][:, 0] = new_state.o[i]
         return new_state
+
+    def _update_rou_state(self, rou_state, next_nodes, action_flag):
+
+        if self.name == 'tsp':
+            rou_state = rou_state.new_update(next_nodes.reshape((-1,)), action_flag.reshape((-1,)))
+        else:
+            rou_state = rou_state.update(next_nodes.reshape((-1,)))
+
+        return rou_state
 
     def _routing_decision(self, rou_agent, rou_state, demand):
         """
@@ -97,13 +120,14 @@ class returnState:
         # make routing decision
         log_p, mask = rou_agent._get_log_p(rou_agent.fixed, rou_state)
         prob = log_p.exp()
-        # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
-        flag_demand = demand > self.c
-        mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
-        # normalize the probability
-        prob = (prob + 0.001) * (1 - mask)
-        prob /= prob.sum(axis=-1, keepdim=True)
-        # decode the next node to visit (based on the routing agent)
+        if self.name == 'tsp':
+            # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
+            flag_demand = demand > self.c
+            mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
+            # normalize the probability
+            prob = (prob + 0.001) * (1 - mask)
+            prob /= prob.sum(axis=-1, keepdim=True)
+            # decode the next node to visit (based on the routing agent)
         next_nodes = rou_agent._select_node(prob[:, 0, :], mask[:, 0, :]).reshape(-1, 1)
         return next_nodes
 

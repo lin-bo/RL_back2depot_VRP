@@ -61,9 +61,14 @@ def load_args(filename):
     return args
 
 
-def load_model(path, epoch=None):
-    from attention_model.attention_nets.attention_model import AttentionModel
+def load_model(path, name='tsp', epoch=None):
+    if name == 'tsp':
+        from attention_model.attention_nets.attention_model import AttentionModel
+    else:
+        from attention_model.vrp.vrp_attention_model import AttentionModel
+
     from attention_model.tsp.problem_tsp import TSP
+    from attention_model.vrp.problem_vrp import CVRP
 
     if os.path.isfile(path):
         model_filename = path
@@ -81,12 +86,12 @@ def load_model(path, epoch=None):
 
     args = load_args(os.path.join(path, 'args.json'))
 
-    # problem = load_problem(args['problem'])
+    problem = TSP if name == 'tsp' else CVRP
 
     model = AttentionModel(
         args['embedding_dim'],
         args['hidden_dim'],
-        TSP,
+        problem,
         n_encode_layers=args['n_encode_layers'],
         mask_inner=True,
         mask_logits=True,
@@ -161,8 +166,7 @@ def load_routing_agent(size, name='tsp'):
         msg = 'No pre-trained tsp model for the given size {}, please use 20, 50, or 100'.format(size)
         raise ValueError(msg)
 
-    print(name)
-    model, _ = load_model('./attention_model/pretrained_{}/{}_{}'.format(name, name, size))
+    model, _ = load_model('./attention_model/pretrained_{}/{}_{}'.format(name, name, size), name)
     use_cuda = torch.cuda.is_available()  # and not opts.no_cuda
     device = torch.device('cuda' if use_cuda else 'cpu')
     model.to(device)

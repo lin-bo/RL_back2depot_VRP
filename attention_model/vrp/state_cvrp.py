@@ -1,6 +1,6 @@
 import torch
 from typing import NamedTuple
-from utils.boolmask import mask_long2bool, mask_long_scatter
+from attention_model.attention_utils.boolmask import mask_long2bool, mask_long_scatter
 
 
 class StateCVRP(NamedTuple):
@@ -33,16 +33,16 @@ class StateCVRP(NamedTuple):
     def dist(self):
         return (self.coords[:, :, None, :] - self.coords[:, None, :, :]).norm(p=2, dim=-1)
 
-    def __getitem__(self, key):
-        assert torch.is_tensor(key) or isinstance(key, slice)  # If tensor, idx all tensors by this tensor:
-        return self._replace(
-            ids=self.ids[key],
-            prev_a=self.prev_a[key],
-            used_capacity=self.used_capacity[key],
-            visited_=self.visited_[key],
-            lengths=self.lengths[key],
-            cur_coord=self.cur_coord[key],
-        )
+    # def __getitem__(self, key):
+    #     assert torch.is_tensor(key) or isinstance(key, slice)  # If tensor, idx all tensors by this tensor:
+    #     return self._replace(
+    #         ids=self.ids[key],
+    #         prev_a=self.prev_a[key],
+    #         used_capacity=self.used_capacity[key],
+    #         visited_=self.visited_[key],
+    #         lengths=self.lengths[key],
+    #         cur_coord=self.cur_coord[key],
+    #     )
 
     # Warning: cannot override len of NamedTuple, len should be number of fields, not batch size
     # def __len__(self):
