@@ -116,7 +116,7 @@ class returnAgent:
         self.optim.step()
         self.scheduler.step()
         # tensorboard log
-        self.writer.add_scalar('Loss', loss.item(), self.cnt)
+        self.writer.add_scalar("Loss", loss.item(), self.cnt)
         self.cnt += 1
         return loss.item()
 

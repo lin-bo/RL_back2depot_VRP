@@ -37,7 +37,7 @@ class return2Depot(ABSolver):
 
     def solve(self, data, graph):
         # init return state
-        rou_state = self.rou_agent.re_init(data['loc'])
+        rou_state = self.rou_agent.re_init(data)
         # init state
         re_state = returnState(data, graph)
         # init route
