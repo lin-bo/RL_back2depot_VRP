@@ -11,6 +11,7 @@ import torch
 from torch import optim
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
+import dgl
 
 from model import QGNN
 
@@ -50,30 +51,28 @@ class returnAgent:
         # graph size
         self.size = None
 
-    def actionDecode(self, batch_graph, state, explore=False):
+    def actionDecode(self, state, explore=False):
         """
         A method to decode action
 
         Args:
-          batch_graph (DGL graph): a batch of graphs
           state (returnState): enviroment state
           explore (boolean): if we want to perform random exploration or not
         """
         self.q_gnn.eval()
-        action, _ = self.getMaxQ(batch_graph, state, explore)
+        action, _ = self.getMaxQ(state, explore)
         return action
 
-    def getMaxQ(self, batch_graph, state, explore=False):
+    def getMaxQ(self, state, explore=False):
         """
         A method to decode action
 
         Args:
-          batch_graph (DGL graph): a batch of graphs
           state (returnState): enviroment state
           explore (boolean): if we want to perform random exploration or not
         """
         # action choice
-        batch = batch_graph.batch_size
+        batch = state.g.batch_size
         action_noreturn = - torch.ones((batch,1), device=self.device)
         action_return = torch.ones((batch,1), device=self.device)
         # calculate Q value
@@ -92,6 +91,11 @@ class returnAgent:
             # visited all
             if torch.all(state.o[i,1:]).item():
                 qind[i, 0] = 1
+        # capacity
+        for i, g in enumerate(dgl.unbatch(state.g)):
+            if torch.all(torch.logical_or(state.c < g.ndata["x"][1:,1], g.ndata["x"][1:,0])).item():
+                qind[i, 0] = 1
+        # get value
         action = (qind - 0.5) * 2
         qvalue = q.gather(dim=1, index=qind)
         return action, qvalue
