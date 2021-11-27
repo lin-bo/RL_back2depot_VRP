@@ -70,7 +70,7 @@ def train(size, step=1, lr=1e-4, batch=64, num_samples=1000, seed=135):
         # set state-action queue
         sa_queue = queue.Queue()
         # initialize return state
-        rou_state = rou_agent.re_init(batch_data['loc'])
+        rou_state = rou_agent.re_init(batch_data['loc'], batch_data["depot"])
         # init state
         re_state = returnState(batch_data, batch_graph)
         for t in range(horizon):
