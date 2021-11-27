@@ -76,7 +76,7 @@ def train(size, step=1, lr=1e-4, batch=64, num_samples=1000, seed=135):
         re_state = returnState(batch_data, batch_graph, rou_agent_name)
         for t in range(horizon):
             # take action
-            action = re_agent.actionDecode(batch_graph, re_state, explore=True)
+            action = re_agent.actionDecode(re_state, explore=True)
             # update state
             re_state, rou_state = re_state.update(action, rou_agent, rou_state, batch_data)
             # put into queue

@@ -45,7 +45,7 @@ class return2Depot(ABSolver):
         # eval
         for t in range(self.size*2):
             # take action
-            action = self.re_agent.actionDecode(graph, re_state)
+            action = self.re_agent.actionDecode(re_state)
             # update state
             re_state, rou_state = re_state.update(action, self.rou_agent, rou_state, data)
             batch_routes = torch.cat((batch_routes, re_state.v), axis=1)
