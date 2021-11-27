@@ -90,7 +90,7 @@ class naiveReturn:
         all_served = (self.o.sum(axis=1) >= self._size).to(torch.int32).to(self.device)
         cant_serve = ((self._demand > self.c.reshape((-1, 1))).sum(axis=1)
                       + self.o.sum(axis=1)
-                      == self._size).to(torch.int32).to(self.device)
+                      >= self._size).to(torch.int32).to(self.device)
 
         return torch.minimum(low_cap + all_served + cant_serve, torch.tensor(1, device=self.device))
 
@@ -105,11 +105,11 @@ class naiveReturn:
         log_p, mask = self.rou_agent._get_log_p(self.rou_agent.fixed, rou_state)
         prob = log_p.exp()
         # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
-
         flag_demand = self._demand > self.c.reshape((self._batch, 1))
         mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
+        # print(self.v[0].tolist(), mask[0][0][15].tolist())
         # normalize the probability
-        prob *= ~mask
+        prob *= (1 - mask)
         prob /= prob.sum(axis=-1, keepdim=True)
         # decode the next node to visit (based on the routing agent)
         next_nodes = self.rou_agent._select_node(prob[:, 0, :], mask[:, 0, :])
