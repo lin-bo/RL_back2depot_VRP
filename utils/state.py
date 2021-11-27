@@ -45,12 +45,11 @@ class returnState:
             rou_state: new state for the routing agent
             reward: (batch, ) tensor specifying the one-step reward for each instance
         """
-        # map -1, 1 to 0, 1
-        action_flag = ((action + 1) / 2).to(torch.int32)
-
         # get demand and loc info
         demand = batch_data["demand"]
         loc = torch.cat((batch_data["depot"].reshape(-1, 1, 2), batch_data["loc"]), axis=1)
+        # map -1, 1 to 0, 1
+        action_flag = ((action + 1) / 2).to(torch.int32)
         # make routing decision
         next_nodes = self._routing_decision(rou_agent, rou_state, demand)
         # update return agent state
