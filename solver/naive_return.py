@@ -31,7 +31,7 @@ class naiveReturn:
 
         # create one hot vectors
         self._one_hot = torch.zeros((self._size + 1, self._size + 1)).to(self.device)
-        self._one_hot.scatter_(0, torch.arange(0, self._size + 1).reshape((1, -1)), 1)
+        self._one_hot.scatter_(0, torch.arange(0, self._size + 1).to(self.device).reshape((1, -1)), 1)
 
     def _set_params(self, batch_data):
 
@@ -60,7 +60,6 @@ class naiveReturn:
 
         # initialize the state of routing agent
         state = self.rou_agent.re_init(batch_data["loc"])
-
         # sequentially generate the solutions
         for t in range(self.horizon):
             action = self._get_action()
@@ -68,8 +67,21 @@ class naiveReturn:
             self._update_return_state(next_nodes, action)
             state = state.new_update(next_nodes, action)
             self.dist += self._step_dist()
+        routes = self._covert_routes()
+        return routes, self.dist.detach().cpu().item()
 
-        return self.routes, self.dist
+    def _covert_routes(self):
+        routes = self.routes.cpu().detach().numpy()[0] - 1
+        routes_list = []
+        tour_list = []
+        for i in routes:
+            if i == -1 and len(tour_list) != 0:
+                routes_list.append(tour_list)
+                tour_list = []
+            if i != -1:
+                tour_list.append(i)
+        return routes_list
+
 
     def _update_return_state(self, next_nodes, action):
         """

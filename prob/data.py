@@ -150,8 +150,12 @@ class VRPDGLDataset(DGLDataset):
         """
         remove_list = []
         for i in range(dist.shape[0]):
+            if i == 0:
+                continue
             ind = np.argpartition(dist[i], k)[:k]
             for j in range(dist.shape[1]):
+                if j == 0:
+                    continue
                 if j not in ind:
                     remove_list.append((i,j))
         nx_graph.remove_edges_from(remove_list)
