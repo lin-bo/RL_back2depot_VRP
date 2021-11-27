@@ -278,17 +278,16 @@ class AttentionModel(nn.Module):
         # Collected lists, return Tensor
         return torch.stack(outputs, 1), torch.stack(sequences, 1)
 
-    def re_init(self, input):
+    def re_init(self, cust, depot):
         """
         initialize the routing state, embedding, fixed given the input
         """
 
-        state = self.problem.make_state(input)
-        embeddings, _ = self.embedder(self._init_embed(input))
-        fixed = self._precompute(embeddings)
+        self.embeddings, _ = self.embedder(self._init_embed(cust))
+        depot_emb, _ = self.embedder(self._init_embed(depot.reshape((-1, 1, 2))))
+        self.fixed = self._precompute(self.embeddings)
 
-        self.embeddings = embeddings
-        self.fixed = fixed
+        state = self.problem.make_state(cust, depot_emb)
 
         return state
 
@@ -452,20 +451,21 @@ class AttentionModel(nn.Module):
                 #                                                                        embeddings.size(-1))
                 #     ).view(batch_size, 1, -1)
 
-                out1 = self.W_placeholder[None, None, :].expand(batch_size, 1, self.W_placeholder.size(-1))
+                # out1 = self.W_placeholder[None, None, :].expand(batch_size, 1, self.W_placeholder.size(-1))
                 out2 = embeddings.gather(
                     1,
-                    torch.cat((state.first_a, current_node), 1)[:, :, None].expand(batch_size, 2,
-                                                                                   embeddings.size(-1))
+                    current_node[:, :, None].expand(batch_size, 1, embeddings.size(-1))
+                    # torch.cat((current_node), 1)[:, :, None].expand(batch_size, 2, embeddings.size(-1))
                 ).view(batch_size, 1, -1)
 
                 device = "cpu"
                 if torch.cuda.is_available():
                     device = "cuda"
 
-                flag = 1 - torch.tensor(state.i.tolist()).reshape(-1, 1, 1)
-                flag = flag.to(device)
-                out = out1 * flag + out2 * (1 - flag)
+                # flag = 1 - torch.tensor(state.i.tolist()).reshape(-1, 1, 1)
+                # flag = flag.to(device)
+                # out = out1 * flag + out2 * (1 - flag)
+                out = torch.cat([state.depot_emb, out2], axis=-1)
 
                 return out
 

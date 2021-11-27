@@ -19,6 +19,7 @@ class StateTSP(NamedTuple):
     lengths: torch.Tensor
     cur_coord: torch.Tensor
     i: torch.Tensor  # Keeps track of step
+    depot_emb: torch.Tensor
 
     @property
     def visited(self):
@@ -40,7 +41,7 @@ class StateTSP(NamedTuple):
     #     )
 
     @staticmethod
-    def initialize(loc, visited_dtype=torch.uint8):
+    def initialize(loc, depot_emb, visited_dtype=torch.uint8):
 
         batch_size, n_loc, _ = loc.size()
         prev_a = torch.zeros(batch_size, 1, dtype=torch.long, device=loc.device)
@@ -61,7 +62,8 @@ class StateTSP(NamedTuple):
             ),
             lengths=torch.zeros(batch_size, 1, device=loc.device),
             cur_coord=None,
-            i=torch.zeros(1, dtype=torch.int64, device=loc.device)  # Vector with length num_steps
+            i=torch.zeros(1, dtype=torch.int64, device=loc.device),  # Vector with length num_steps
+            depot_emb=depot_emb
         )
 
     def get_final_cost(self):
@@ -107,7 +109,7 @@ class StateTSP(NamedTuple):
 
         # Update should only be called with just 1 parallel step, in which case we can check this way if we should update
         flag = (self.i == 0).to(torch.int32)
-        first_a = prev_a  * flag + self.first_a * (1 - flag)
+        first_a = prev_a * flag + self.first_a * (1 - flag)
 
         visited_ = self.visited_.scatter(-1, prev_a[:, :, None], 1)
         visited_ = visited_ * (1 - action.reshape((-1, 1, 1))) + self.visited_ * action.reshape((-1, 1, 1))

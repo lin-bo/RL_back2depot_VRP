@@ -59,7 +59,7 @@ class naiveReturn:
         self._set_params(batch_data)
 
         # initialize the state of routing agent
-        state = self.rou_agent.re_init(batch_data["loc"])
+        state = self.rou_agent.re_init(batch_data["loc"], batch_data["depot"])
         # sequentially generate the solutions
         for t in range(self.horizon):
             action = self._get_action()
@@ -82,7 +82,6 @@ class naiveReturn:
             if i != -1:
                 tour_list.append(i)
         return routes_list
-
 
     def _update_return_state(self, next_nodes, action):
         """
@@ -120,8 +119,6 @@ class naiveReturn:
         # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
         flag_demand = self._demand > self.c.reshape((self._batch, 1))
         mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
-        # print(self.v[0].tolist(), mask[0][0][15].tolist())
-        # normalize the probability
         prob *= (1 - mask)
         prob /= prob.sum(axis=-1, keepdim=True)
         # decode the next node to visit (based on the routing agent)
