@@ -82,7 +82,7 @@ class returnAgent:
         # max value
         qind = torch.argmax(q, dim=1).reshape(batch, 1)
         if explore:
-            exp_flag = (torch.rand((batch_graph.batch_size, 1), device=self.device) <= self.epsilon).to(torch.int32)
+            exp_flag = (torch.rand((batch, 1), device=self.device) <= self.epsilon).to(torch.int32)
             qind = exp_flag * (1 - qind) + (1 - exp_flag) * qind
         for i in range(batch):
             # force to not return on depot
@@ -111,7 +111,7 @@ class returnAgent:
         # calculate loss
         self.q_gnn.train()
         q_p = self.q_gnn(s_p, a_p)
-        _, max_q_t = self.getMaxQ(s_t.g, s_t)
+        _, max_q_t = self.getMaxQ(s_t)
         y = r_pt + self.gamma * max_q_t
         loss = self.criterion(q_p, y)
         # backward pass
