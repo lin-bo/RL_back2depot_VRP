@@ -306,12 +306,8 @@ class AttentionModel(nn.Module):
 
     def _select_node(self, probs, mask):
 
-        assert (probs == probs).all(), "Probs should not contain any nans"
-
         if self.decode_type == "greedy":
             _, selected = probs.max(1)
-            assert not mask.gather(1, selected.unsqueeze(
-                -1)).data.any(), "Decode greedy: infeasible action has maximum probability"
 
         elif self.decode_type == "sampling":
             selected = probs.multinomial(1).squeeze(1)
