@@ -128,7 +128,7 @@ class returnState:
         else:
             depot_mask = torch.cat([torch.ones((self._batch, 1), dtype=torch.float32, device=self.device),
                                     torch.zeros((self._batch, self._size), dtype=torch.float32, device=self.device)],
-                                   axis=1)
+                                   axis=1).reshape((self._batch, 1, -1))
             mask = torch.maximum(depot_mask, mask)
         prob = (prob + 0.001) * (1 - mask)
         prob /= prob.sum(axis=-1, keepdim=True)
