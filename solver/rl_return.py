@@ -19,18 +19,19 @@ class return2Depot(ABSolver):
 
     Args:
         size (int): graph size
-        rou_agent_type (str): type of routing agent 
+        rou_agent_type (str): type of routing agent
     """
 
     def __init__(self, size, rou_agent_type):
         self.size = size
+        self.rou_agent_type = rou_agent_type
         # cuda
         self.device = "cpu"
         if torch.cuda.is_available():
             self.device = "cuda"
         # load routing agent
         print("\nLoading routing agent...")
-        self.rou_agent = load_routing_agent(size=self.size, name=rou_agent_type)
+        self.rou_agent = load_routing_agent(size=self.size, name=self.rou_agent_type)
         # initialize return agent
         print("\nLoading return2depot agent...")
         self.re_agent = returnAgent(gnn_x_feat=2, gnn_w_feats=1, gnn_e_feats=64)
@@ -40,7 +41,7 @@ class return2Depot(ABSolver):
         # init return state
         rou_state = self.rou_agent.re_init(data)
         # init state
-        re_state = returnState(data, graph)
+        re_state = returnState(data, graph, self.rou_agent_type)
         # init route
         batch_routes = re_state.v
         # eval
@@ -81,7 +82,7 @@ class return2Depot(ABSolver):
         # calculate
         batch_dist = []
         for i in range(depots.shape[0]):
-            coor = np.concatenate((locs[i], depots[i]), axis=0)
+            coor = np.concatenate((depots[i], locs[i]), axis=0)
             dist = distance.cdist(coor, coor, "euclidean")
             batch_dist.append(dist)
         return batch_dist
