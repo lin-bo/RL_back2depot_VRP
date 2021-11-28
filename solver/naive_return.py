@@ -24,7 +24,7 @@ class naiveReturn:
         if torch.cuda.is_available():
             self.device = "cuda"
 
-        self.rou_agent = load_routing_agent(size=size)
+        self.rou_agent = load_routing_agent(size=size, name='tsp')
         self.horizon = size * 2
         self.thre = thre
         self._size = size
