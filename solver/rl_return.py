@@ -19,9 +19,10 @@ class return2Depot(ABSolver):
 
     Args:
         size (int): graph size
+        rou_agent_type (str): type of routing agent 
     """
 
-    def __init__(self, size):
+    def __init__(self, size, rou_agent_type):
         self.size = size
         # cuda
         self.device = "cpu"
@@ -29,7 +30,7 @@ class return2Depot(ABSolver):
             self.device = "cuda"
         # load routing agent
         print("\nLoading routing agent...")
-        self.rou_agent = load_routing_agent(size=self.size)
+        self.rou_agent = load_routing_agent(size=self.size, name=rou_agent_type)
         # initialize return agent
         print("\nLoading return2depot agent...")
         self.re_agent = returnAgent(gnn_x_feat=2, gnn_w_feats=1, gnn_e_feats=64)
