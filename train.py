@@ -5,6 +5,7 @@
 Deep Q-Learning
 """
 
+import argparse
 import queue
 import time
 
@@ -17,7 +18,7 @@ from attention_model import load_routing_agent
 from utils import returnState, returnAgent, replayMem, rewardCal
 
 
-def train(size, rou_agent_type="tsp", step=1, lr=1e-4, batch=64, num_samples=1000, seed=135):
+def train(size, rou_agent_type="tsp", step=1, lr=1e-4, batch=64, num_samples=10000, seed=135):
     """
     A function to train back2depot DQN
 
@@ -98,3 +99,29 @@ def train(size, rou_agent_type="tsp", step=1, lr=1e-4, batch=64, num_samples=100
     print("\nSaving model...")
     print("  ./pretrained/{}".format(filename))
     re_agent.saveModel(filename)
+
+if __name__ == "__main__":
+    # init parser
+    parser = argparse.ArgumentParser()
+    # configuration
+    parser.add_argument("--size",
+                        type=int,
+                        choices=[20, 50, 100],
+                        help="graph size")
+    parser.add_argument("--step",
+                        type=int,
+                        default=3,
+                        help="step length")
+    parser.add_argument("--lr",
+                        type=float,
+                        default=1e-4,
+                        help="learning rate")
+    parser.add_argument("--batch",
+                        type=int,
+                        default=64,
+                        help="batch size")
+    # get configuration
+    config = parser.parse_args()
+    # run
+    train(size=config.size, rou_agent_type="vrp", step=config.step,
+          lr=config.lr, batch=64, num_samples=10000, seed=135)
