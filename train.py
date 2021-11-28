@@ -17,7 +17,7 @@ from attention_model import load_routing_agent
 from utils import returnState, returnAgent, replayMem, rewardCal
 
 
-def train(size, step=1, lr=1e-4, batch=64, num_samples=1000, seed=135):
+def train(size, rou_agent_type="tsp", step=1, lr=1e-4, batch=64, num_samples=1000, seed=135):
     """
     A function to train back2depot DQN
 
@@ -39,14 +39,13 @@ def train(size, step=1, lr=1e-4, batch=64, num_samples=1000, seed=135):
     time.sleep(1)
     data = VRPDGLDataset(size=size, num_samples=num_samples, seed=seed)
     dataloader = GraphDataLoader(data, batch_size=batch)
-    rou_agent_name = 'tsp'
     # init memory
     mem = replayMem(mem_size=1000, seed=seed)
     # set time horizon
     horizon = 2 * size
     # load routing agent
     print("\nLoading routing agent...")
-    rou_agent = load_routing_agent(size=size, name=rou_agent_name)
+    rou_agent = load_routing_agent(size=size, name=rou_agent_type)
     # initialize return agent
     print("\nLoading return2depot agent...")
     re_agent = returnAgent(gnn_x_feat=2,
@@ -73,7 +72,7 @@ def train(size, step=1, lr=1e-4, batch=64, num_samples=1000, seed=135):
         # initialize return state
         rou_state = rou_agent.re_init(batch_data)
         # init state
-        re_state = returnState(batch_data, batch_graph, rou_agent_name)
+        re_state = returnState(batch_data, batch_graph, rou_agent_type)
         for t in range(horizon):
             # take action
             action = re_agent.actionDecode(re_state, explore=True)
