@@ -7,12 +7,14 @@ Dataset
 
 import os
 import pickle
+import random
 
 import numpy as np
 from scipy.spatial import distance
 import networkx as nx
-from torch.utils.data import Dataset
 import torch
+from torch.utils.data import Dataset
+from torch.distributions.multivariate_normal import MultivariateNormal
 import dgl
 from dgl.data import DGLDataset
 from tqdm import tqdm
@@ -40,25 +42,19 @@ class VRPDataset(Dataset):
         seed (int): random seed
     """
 
-    def __init__(self, size=50, mode="test", num_samples=1000, seed=1234):
+    def __init__(self, size=50, mode="test", distr="uniform", num_samples=1000, seed=1234):
         # check mode
         assert mode in ["train", "val", "test"], "Invalid dataset mode."
         # init Dataset
         super(VRPDataset, self).__init__()
-        # get path
-        path = "./data/vrp/vrp{}_{}_seed{}.pkl".format(size, mode, seed)
-        # load data
-        if os.path.isfile(path):
-            with open(path, "rb") as f:
-                data = pickle.load(f)
-            self.data = [make_instance(args) for args in data[:num_samples]]
-        # generate data
-        else:
-            # set random seed
-            torch.manual_seed(seed)
-            # capacities
-            capacity = CAPACITIES[size]
-            # data
+        # set random seed
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+        random.seed(seed)
+        # capacities
+        capacity = CAPACITIES[size]
+        # data
+        if distr == "uniform":
             self.data = [
                 {
                 # customer location
@@ -70,6 +66,39 @@ class VRPDataset(Dataset):
                 }
                 for i in range(num_samples)
             ]
+        if distr == "cluster":
+            ratio = np.random.uniform(0, 1, (3,))
+            ratio /= ratio.sum()
+            size1 = int(ratio[0] * size)
+            size2 = int(ratio[1] * size)
+            size3 = size - size1 - size2
+            u1 = torch.rand(2)/2+0.25
+            mat = torch.rand(2,2)-0.5
+            s1 = torch.mm(mat, torch.t(mat))
+            dist1 = MultivariateNormal(u1, s1)
+            u2 = torch.rand(2)/2+0.25
+            mat = torch.rand(2,2)-0.5
+            s2 = torch.mm(mat, torch.t(mat))
+            dist2 = MultivariateNormal(u2, s2)
+            u3 = torch.rand(2)/2+0.25
+            mat = torch.rand(2,2)-0.5
+            s3 = torch.mm(mat, torch.t(mat))
+            dist3 = MultivariateNormal(u1, s1)
+            self.data = [
+                {
+                # customer location
+                "loc": torch.cat((dist1.sample((size1,)),
+                                  dist2.sample((size2,)),
+                                  dist3.sample((size3,))),
+                                 dim=0),
+                # customer demand
+                "demand": torch.FloatTensor(size).uniform_(1, 10).int().float() / capacity,
+                # depot
+                "depot": torch.FloatTensor(2).uniform_(0.25, 0.75)
+                }
+                for i in range(num_samples)
+            ]
+
 
     def __len__(self):
         """
@@ -95,9 +124,9 @@ class VRPDGLDataset(DGLDataset):
         seed (int): random seed
     """
 
-    def __init__(self, size=50, mode="test", num_samples=1000, seed=1234):
+    def __init__(self, size=50, mode="test", distr="uniform", num_samples=1000, seed=1234):
         self.num_samples = num_samples
-        self.data = VRPDataset(size, mode, num_samples, seed).data
+        self.data = VRPDataset(size, mode, distr, num_samples, seed).data
         super(VRPDGLDataset, self).__init__(name="vrp")
 
     def process(self):
