@@ -67,6 +67,8 @@ class return2Depot(ABSolver):
                     tour_list = []
                 if i != -1:
                     tour_list.append(i)
+            if len(tour_list) != 0:
+                routes_list.append(tour_list)
             batch_routes_list.append(routes_list)
         return batch_routes_list
 
