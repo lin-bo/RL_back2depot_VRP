@@ -132,9 +132,8 @@ class returnState:
                                     torch.zeros((self._batch, self._size), dtype=torch.float32, device=self.device)],
                                    axis=1).reshape((self._batch, 1, -1))
             mask = torch.maximum(depot_mask, mask)
-
         # normalize the probability
-        prob = (prob + 0.001) * (1 - mask)
+        prob = (prob + 0.001) * (1 - mask.to(torch.int32))
         prob /= prob.sum(axis=-1, keepdim=True)
         # decode the next node to visit (based on the routing agent)
         next_nodes = rou_agent._select_node(prob[:, 0, :], mask[:, 0, :]).reshape(-1, 1)
