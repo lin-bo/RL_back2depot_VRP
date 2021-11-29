@@ -24,8 +24,9 @@ def routesPlot(routes, depot, loc):
     # figure size
     plt.figure(figsize=(8, 8))
     # axis range
-    plt.xlim([0, 1])
-    plt.ylim([0, 1])
+    #plt.xlim([0, 1])
+    #plt.ylim([0, 1])
+    plt.axis("equal")
     # annotate deg
     #rel_loc = loc - depot
     #rad = np.arctan2(rel_loc[:,1], rel_loc[:,0])
