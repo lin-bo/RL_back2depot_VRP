@@ -8,7 +8,7 @@ from solver.absolver import ABSolver
 
 class amVRP:
 
-    def __init__(self, size=20, method='sampling'):
+    def __init__(self, size=20, method='greedy'):
         """
         args:
             size: the number of customers
