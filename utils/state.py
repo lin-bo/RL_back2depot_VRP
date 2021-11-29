@@ -119,7 +119,9 @@ class returnState:
         """
         # make routing decision
         log_p, mask = rou_agent._get_log_p(rou_agent.fixed, rou_state)
-        mask = self.o
+        demand = torch.cat((torch.zeros(self._batch,1, device=self.device), demand), axis=1)
+        mask = torch.logical_or(self.o.to(torch.bool), (demand > self.c)).reshape(self._batch, 1, -1)
+        #mask = self.o
         prob = log_p.exp()
         if self.name == 'tsp':
             # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
