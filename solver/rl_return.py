@@ -35,7 +35,7 @@ class return2Depot(ABSolver):
         # initialize return agent
         print("\nLoading return2depot agent...")
         self.re_agent = returnAgent(gnn_x_feat=2, gnn_w_feats=1, gnn_e_feats=64)
-        self.re_agent.loadModel("./pretrained/vrp-{}.pkl".format(size))
+        self.re_agent.loadModel("./pretrained/{}-{}.pkl".format(self.rou_agent_type, self.size))
 
     def solve(self, data, graph):
         # init return state
