@@ -99,18 +99,17 @@ class VRPDataset(Dataset):
                 for i in range(num_samples)
             ]
 
-
     def __len__(self):
         """
         A method to get data size
         """
         return len(self.data)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, ind):
         """
         A method to get item
         """
-        return self.data[idx]
+        return self.data[ind]
 
 
 class VRPDGLDataset(DGLDataset):
@@ -195,8 +194,8 @@ class VRPDGLDataset(DGLDataset):
         """
         return len(self.graph)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, ind):
         """
         A method to get item
         """
-        return self.data[idx], self.graph[idx]
+        return self.data[ind], self.graph[ind]
