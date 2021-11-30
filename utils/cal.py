@@ -25,5 +25,5 @@ def rewardCal(step, sa_queue):
     """
     A function to calculate n-step rewards
     """
-    r = torch.sum(torch.stack([s.r for s, _ in list(sa_queue.queue)])).detach()
+    r = torch.stack([s.r for s, _ in list(sa_queue.queue)]).detach()
     return r
