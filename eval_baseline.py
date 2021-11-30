@@ -15,7 +15,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from prob import VRPDataset
-from solver import cwHeuristic, sweepHeuristic, googleOR, naiveReturn
+from solver import cwHeuristic, sweepHeuristic, googleOR, naiveReturn, amVRP
 from utils import routesPlot, checkValid
 
 def eval(size, algo, solver_args):
@@ -30,7 +30,7 @@ def eval(size, algo, solver_args):
     # load test data
     print("Load data...")
     print("Graph size: {}".format(size))
-    data = VRPDataset(size=size, num_samples=10000)
+    data = VRPDataset(size=size, num_samples=1000)
     dataloader = DataLoader(data, batch_size=1, shuffle=False)
     print()
     # select solver
@@ -56,6 +56,10 @@ def eval(size, algo, solver_args):
         print("  Capacity threshold: {}".format(solver_args[0]))
         args = {"thre":solver_args[0]}
         prob = solver(size=size, thre=args["thre"])
+    if algo == "am":
+        print("  Attention Model")
+        solver = amVRP
+        prob = solver(size=size)
     print()
     # create table
     path = "./res"
@@ -78,6 +82,19 @@ def eval(size, algo, solver_args):
             # run solver
             tick = time.time()
             routes, obj = prob.solve(ins)
+            tock = time.time()
+        elif algo == "am":
+            # cuda
+            device = "cpu"
+            if torch.cuda.is_available():
+                device = "cuda"
+            ins["depot"] = ins["depot"].to(device)
+            ins["loc"] = ins["loc"].to(device)
+            ins["demand"] = ins["demand"].to(device)
+            # run solver
+            tick = time.time()
+            routes, obj = prob.solve(ins)
+            routes, obj = routes[0], obj[0]
             tock = time.time()
         else:
             # get info
@@ -110,7 +127,7 @@ if __name__ == "__main__":
                         help="graph size")
     parser.add_argument("--algo",
                         type=str,
-                        choices=["cw", "sw", "gg", "nr"],
+                        choices=["cw", "sw", "gg", "nr", "am"],
                         help="algorithm")
     parser.add_argument("--args",
                         type=int,
