@@ -8,7 +8,7 @@ from solver.absolver import ABSolver
 
 class amVRP:
 
-    def __init__(self, size=20, method='greedy'):
+    def __init__(self, size=20, method="greedy"):
         """
         args:
             size: the number of customers
@@ -17,14 +17,14 @@ class amVRP:
         if torch.cuda.is_available():
             self.device = "cuda"
 
-        self.solver = load_routing_agent(size=size, name='vrp')
+        self.solver = load_routing_agent(size=size, name="vrp")
         self.horizon = size * 2
         self._size = size
-        assert method in ['greedy', 'sampling']
+        assert method in ["greedy", "sampling"]
         self.method = method
 
     def solve(self, batch_data):
-        if self.method == 'greedy':
+        if self.method == "greedy":
             batch_rep, iter_rep = 1, 1
         else:
             batch_rep, iter_rep = 50, 1
