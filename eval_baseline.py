@@ -24,13 +24,14 @@ def eval(size, distr, algo, solver_args):
 
     Args:
         size(int): graph size
+        distr(str): data distribution
         algo (str): name of algorithm
         solver_args (tuple): args of solver
     """
     # load test data
     print("Load data...")
     print("Graph size: {}".format(size))
-    data = VRPDataset(size=size, num_samples=1000)
+    data = VRPDataset(size=size, distr=distr, num_samples=1000)
     dataloader = DataLoader(data, batch_size=1, shuffle=False)
     print()
     # select solver
@@ -59,7 +60,13 @@ def eval(size, distr, algo, solver_args):
     if algo == "am":
         print("  Attention Model")
         solver = amVRP
-        prob = solver(size=size)
+        args = {"method":None}
+        if solver_args[0] == 0:
+            args["method"] = "greedy"
+        if solver_args[0] == 1:
+            args["method"] = "sampling"
+        print("  Method: {}".format(args["method"]))
+        prob = solver(size=size, method=args["method"])
     print()
     # create table
     path = "./res/{}".format(distr)

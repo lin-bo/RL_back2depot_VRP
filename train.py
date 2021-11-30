@@ -18,7 +18,7 @@ from attention_model import load_routing_agent
 from utils import returnState, returnAgent, replayMem, rewardCal
 
 
-def train(size, rou_agent_type="vrp", step=1, lr=1e-4, batch=64, num_samples=10000, seed=135):
+def train(size, rou_agent_type="vrp", distr="uniform", step=1, lr=1e-4, batch=64, num_samples=10000, seed=135):
     """
     A function to train back2depot DQN
 
@@ -38,7 +38,7 @@ def train(size, rou_agent_type="vrp", step=1, lr=1e-4, batch=64, num_samples=100
     # load dataset
     print("\nGenerating dataset...")
     time.sleep(1)
-    data = VRPDGLDataset(size=size, num_samples=num_samples, seed=seed)
+    data = VRPDGLDataset(size=size, distr=distr, num_samples=num_samples, seed=seed)
     dataloader = GraphDataLoader(data, batch_size=1)
     # init memory
     mem = replayMem(mem_size=10000, seed=seed)
@@ -53,7 +53,7 @@ def train(size, rou_agent_type="vrp", step=1, lr=1e-4, batch=64, num_samples=100
                            gnn_w_feats=1,
                            gnn_e_feats=64,
                            gamma=0.99,
-                           epsilon=0.1,
+                           epsilon=0.6,
                            lr=lr,
                            seed=seed,
                            logdir="./logs/{}/{}/".format(rou_agent_type,size))
@@ -97,9 +97,12 @@ def train(size, rou_agent_type="vrp", step=1, lr=1e-4, batch=64, num_samples=100
                 # all visited
                 if torch.all(re_state.o[:,1:]).item():
                     break
-        #re_agent.epsilon = 0.1 + 0.6 * 0.97 ** i
+        re_agent.epsilon = 0.1 + 0.5 * 0.97 ** i
+        if i and i % 10 == 0:
+            filename = "{}-{}.pkl".format(rou_agent_type, size)
+            re_agent.saveModel(filename)
     # save model
-    filename = "{}-{}.pkl".format(rou_agent_type, size)
+    filename = "{}-{}-{}.pkl".format(rou_agent_type, dist, size)
     print("\nSaving model...")
     print("  ./pretrained/{}".format(filename))
     re_agent.saveModel(filename)
@@ -112,6 +115,10 @@ if __name__ == "__main__":
                         type=int,
                         choices=[20, 50, 100],
                         help="graph size")
+    parser.add_argument("--distr",
+                        type=str,
+                        choices=["uniform", "cluster"],
+                        help="data distribution")
     parser.add_argument("--step",
                         type=int,
                         default=3,
@@ -127,5 +134,5 @@ if __name__ == "__main__":
     # get configuration
     config = parser.parse_args()
     # run
-    train(size=config.size, rou_agent_type="vrp", step=config.step,
-          lr=config.lr, batch=64, num_samples=10000, seed=135)
+    train(size=config.size, distr=config.distr, rou_agent_type="vrp", step=config.step,
+          lr=config.lr, batch=64, num_samples=1000, seed=135)
