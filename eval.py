@@ -17,14 +17,13 @@ from tqdm import tqdm
 from prob import VRPDGLDataset
 from solver import return2Depot
 
-def eval(size):
+def eval(size, distr):
     """
     A function to evaluate different algorithms
 
     Args:
         size(int): graph size
-        algo (str): name of algorithm
-        solver_args (tuple): args of solver
+        distr (str): data distribution
     """
     # device
     print("Device:")
@@ -36,17 +35,17 @@ def eval(size):
     print("\nLoad data...")
     print("  Graph size: {}".format(size))
     batch = 64
-    data = VRPDGLDataset(size=size, num_samples=1000)
+    data = VRPDGLDataset(size=size, distr=distr, num_samples=1000)
     dataloader = GraphDataLoader(data, batch_size=batch, shuffle=False)
     # create table
-    path = "./res"
+    path = "./res/{}".format(distr)
     file = "n{}-r2d.csv".format(size)
     if not os.path.isdir(path):
         os.mkdir(path)
     print("Save result to " + path + "/" + file)
     df = pd.DataFrame(columns=["Obj", "Routes", "Vehicles", "Elapsed"])
     # init solver
-    solver = return2Depot(size, "vrp")
+    solver = return2Depot(size, distr, "vrp")
     # solve
     print("\nEvaluating:")
     pbar = tqdm(dataloader)
@@ -83,6 +82,10 @@ if __name__ == "__main__":
                         type=int,
                         choices=[20, 50, 100],
                         help="graph size")
+    parser.add_argument("--distr",
+                        type=str,
+                        choices=["uniform", "cluster"],
+                        help="data distribution")
     config = parser.parse_args()
     # run
-    eval(config.size)
+    eval(config.size, config.distr)

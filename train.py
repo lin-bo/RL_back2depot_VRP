@@ -56,7 +56,7 @@ def train(size, rou_agent_type="vrp", distr="uniform", step=1, lr=1e-4, batch=64
                            epsilon=0.6,
                            lr=lr,
                            seed=seed,
-                           logdir="./logs/{}/{}/".format(rou_agent_type,size))
+                           logdir="./logs/{}/{}/{}/".format(rou_agent_type, distr, size))
     print("\nTraining model...")
     time.sleep(1)
     pbar = tqdm(dataloader)
@@ -99,10 +99,10 @@ def train(size, rou_agent_type="vrp", distr="uniform", step=1, lr=1e-4, batch=64
                     break
         re_agent.epsilon = 0.1 + 0.5 * 0.97 ** i
         if i and i % 10 == 0:
-            filename = "{}-{}.pkl".format(rou_agent_type, size)
+            filename = "{}-{}-{}.pkl".format(rou_agent_type, distr, size)
             re_agent.saveModel(filename)
     # save model
-    filename = "{}-{}-{}.pkl".format(rou_agent_type, dist, size)
+    filename = "{}-{}-{}.pkl".format(rou_agent_type, distr, size)
     print("\nSaving model...")
     print("  ./pretrained/{}".format(filename))
     re_agent.saveModel(filename)
