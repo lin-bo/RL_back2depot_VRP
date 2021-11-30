@@ -126,11 +126,11 @@ class returnState:
             # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
             flag_demand = demand > self.c
             mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
-        else:
-            depot_mask = torch.cat([torch.ones((self._batch, 1), dtype=torch.float32, device=self.device),
-                                    torch.zeros((self._batch, self._size), dtype=torch.float32, device=self.device)],
-                                   axis=1).reshape((self._batch, 1, -1))
-            mask = torch.maximum(depot_mask, mask)
+        #else:
+        #    depot_mask = torch.cat([torch.ones((self._batch, 1), dtype=torch.float32, device=self.device),
+        #                            torch.zeros((self._batch, self._size), dtype=torch.float32, device=self.device)],
+        #                           axis=1).reshape((self._batch, 1, -1))
+        #    mask = torch.maximum(depot_mask, mask)
         # normalize the probability
         prob = (prob + 0.001) * (1 - mask.to(torch.int32))
         prob /= prob.sum(axis=-1, keepdim=True)
