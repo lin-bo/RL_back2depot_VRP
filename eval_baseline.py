@@ -18,7 +18,7 @@ from prob import VRPDataset
 from solver import cwHeuristic, sweepHeuristic, googleOR, naiveReturn, amVRP
 from utils import routesPlot, checkValid
 
-def eval(size, algo, solver_args):
+def eval(size, distr, algo, solver_args):
     """
     A function to evaluate different algorithms
 
@@ -62,7 +62,7 @@ def eval(size, algo, solver_args):
         prob = solver(size=size)
     print()
     # create table
-    path = "./res"
+    path = "./res/{}".format(distr)
     file = "n{}-".format(size) + algo + "-" + "_".join(map(str, solver_args)) + ".csv"
     if not os.path.isdir(path):
         os.mkdir(path)
@@ -125,6 +125,10 @@ if __name__ == "__main__":
                         type=int,
                         choices=[20, 50, 100],
                         help="graph size")
+    parser.add_argument("--distr",
+                        type=str,
+                        choices=["uniform", "cluster"],
+                        help="data distribution")
     parser.add_argument("--algo",
                         type=str,
                         choices=["cw", "sw", "gg", "nr", "am"],
@@ -137,4 +141,4 @@ if __name__ == "__main__":
     # get configuration
     config = parser.parse_args()
     # run
-    eval(config.size, config.algo, config.args)
+    eval(config.size, config.distr, config.algo, config.args)
