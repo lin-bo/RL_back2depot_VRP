@@ -94,6 +94,9 @@ def train(size, rou_agent_type="vrp", step=1, lr=1e-4, batch=64, num_samples=100
                 desc = "Iter {}, Loss: {:.4f}".format(iters, loss)
                 pbar.set_description(desc)
                 iters += 1
+                # all visited
+                if torch.all(re_state.o[:,1:]).item():
+                    break
         #re_agent.epsilon = 0.1 + 0.6 * 0.97 ** i
     # save model
     filename = "{}-{}.pkl".format(rou_agent_type, size)
