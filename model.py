@@ -122,11 +122,10 @@ class QFuction(nn.Module):
         # pool
         self.sumpool = SumPooling()
         # fc
-        self._theta5fc = nn.Linear(self._e_feats*2, 1)
+        self._theta5fc = nn.Linear(self._e_feats*3, 1)
         self._theta6fc = nn.Linear(self._e_feats, self._e_feats)
         self._theta7fc = nn.Linear(self._e_feats, self._e_feats)
         self._theta8fc = nn.Linear(1, self._e_feats)
-        self._theta9fc = nn.Linear(1, self._e_feats)
 
     def forward(self, feat, state, action):
         """
@@ -138,8 +137,9 @@ class QFuction(nn.Module):
           action(tensor): a bacth of actions
         """
         h1 = self._agglob(feat, state)
-        h2 = self._aggcur(feat, state, action)
-        h = f.relu(torch.cat((h1, h2), 1))
+        h2 = self._aggcur(feat, state)
+        h3 = self._aggact(action)
+        h = f.relu(torch.cat((h1, h2, h3), 1))
         q = self._theta5fc(h)
         return q
 
@@ -148,9 +148,13 @@ class QFuction(nn.Module):
         h = self._theta6fc(feat_sum)
         return h
 
-    def _aggcur(self, feat, state, action):
+    def _aggcur(self, feat, state):
         cur_feat = self._getCurFeat(state.g, feat, state.v)
-        h = self._theta7fc(cur_feat) + self._theta8fc(action) + self._theta9fc(state.c)
+        h = self._theta7fc(cur_feat)
+        return h
+
+    def _aggact(self, action):
+        h = self._theta8fc(action)
         return h
 
     def _getCurFeat(self, graph, feat, cur_node):
