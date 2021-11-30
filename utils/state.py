@@ -152,5 +152,15 @@ class returnState:
         curr_loc = loc.gather(axis=1, index=idx)[:, 0, :]
         return - (prev_loc - curr_loc).norm(dim=-1, keepdim=True)
 
-    def __getitem__(self, ind):
-        pass
+    def cat(self, other):
+        new_state = copy.copy(self)
+        new_state._batch += other._batch
+        new_state._size = other._size
+        #self.g = copy.deepcopy(batch_graph)
+        new_state.v = torch.cat((new_state.v, other.v), dim=0)
+        new_state.c = torch.cat((new_state.c, other.c), dim=0)
+        new_state.o = torch.cat((new_state.o, other.o), dim=0)
+        new_state.prev_v = torch.cat((new_state.prev_v, other.prev_v), dim=0)
+        new_state.r = torch.cat((new_state.r, other.r), dim=0)
+        new_state.g = dgl.batch([new_state.g, other.g])
+        return new_state
