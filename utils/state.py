@@ -151,3 +151,6 @@ class returnState:
         idx = idx.to(torch.int64)
         curr_loc = loc.gather(axis=1, index=idx)[:, 0, :]
         return - (prev_loc - curr_loc).norm(dim=-1, keepdim=True)
+
+    def __getitem__(self, ind):
+        pass
