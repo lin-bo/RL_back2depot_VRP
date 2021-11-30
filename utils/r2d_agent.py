@@ -107,7 +107,7 @@ class returnAgent:
         Args:
           record (namedtuple): a record of MDP steps
         """
-        s_p, a_p, r_pt, s_t = record.s_p, record.a_p, record.r_pt, record.s_t
+        s_p, a_p, r_pt, s_t = record["s_p"], record["a_p"], record["r_pt"], record["s_t"]
         # calculate loss
         self.q_gnn.train()
         q_p = self.q_gnn(s_p, a_p)

@@ -18,7 +18,7 @@ from attention_model import load_routing_agent
 from utils import returnState, returnAgent, replayMem, rewardCal
 
 
-def train(size, rou_agent_type="tsp", step=1, lr=1e-4, batch=64, num_samples=10000, seed=135):
+def train(size, rou_agent_type="vrp", step=1, lr=1e-4, batch=64, num_samples=10000, seed=135):
     """
     A function to train back2depot DQN
 
@@ -39,9 +39,9 @@ def train(size, rou_agent_type="tsp", step=1, lr=1e-4, batch=64, num_samples=100
     print("\nGenerating dataset...")
     time.sleep(1)
     data = VRPDGLDataset(size=size, num_samples=num_samples, seed=seed)
-    dataloader = GraphDataLoader(data, batch_size=batch)
+    dataloader = GraphDataLoader(data, batch_size=1)
     # init memory
-    mem = replayMem(mem_size=1000, seed=seed)
+    mem = replayMem(mem_size=10000, seed=seed)
     # set time horizon
     horizon = 2 * size
     # load routing agent
@@ -56,13 +56,13 @@ def train(size, rou_agent_type="tsp", step=1, lr=1e-4, batch=64, num_samples=100
                            epsilon=0.1,
                            lr=lr,
                            seed=seed,
-                           logdir="./logs/{}/".format(size))
+                           logdir="./logs/{}/{}/".format(rou_agent_type,size))
     print("\nTraining model...")
     time.sleep(1)
     pbar = tqdm(dataloader)
     # init count
     iters = 0
-    for batch_data, batch_graph in pbar:
+    for i, (batch_data, batch_graph) in enumerate(pbar):
         # to device
         batch_graph = batch_graph.to(device)
         batch_data["loc"] = batch_data["loc"].to(device)
@@ -88,14 +88,15 @@ def train(size, rou_agent_type="tsp", step=1, lr=1e-4, batch=64, num_samples=100
                 # update memory
                 mem.update(re_state_prev, action_prev, reward, re_state)
                 # update model parameters
-                record = mem.sample()
+                record = mem.sample(batch)
                 loss = re_agent.updateModel(record)
                 # tqdm log
                 desc = "Iter {}, Loss: {:.4f}".format(iters, loss)
                 pbar.set_description(desc)
                 iters += 1
+        #re_agent.epsilon = 0.1 + 0.6 * 0.97 ** i
     # save model
-    filename = "vrp-{}.pkl".format(size)
+    filename = "{}-{}.pkl".format(rou_agent_type, size)
     print("\nSaving model...")
     print("  ./pretrained/{}".format(filename))
     re_agent.saveModel(filename)
