@@ -122,7 +122,7 @@ class returnState:
         prob = log_p.exp()
         if self.name == 'tsp':
             # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
-            flag_demand = demand > self.c
+            flag_demand = demand > (self.c + 1e-4)
             mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
         else:
             demand = torch.cat((torch.zeros(self._batch,1, device=self.device), demand), axis=1)
@@ -135,7 +135,9 @@ class returnState:
         #prob = (prob + 0.001) * (1 - mask.to(torch.int32))
         #prob /= prob.sum(axis=-1, keepdim=True)
         # decode the next node to visit (based on the routing agent)
+        print(mask[:, 0, :])
         next_nodes = rou_agent._select_node(prob[:, 0, :], mask[:, 0, :]).reshape(-1, 1)
+        print(next_nodes)
         return next_nodes, mask
 
     def _cal_reward(self, loc):
