@@ -151,6 +151,7 @@ class VRPDGLDataset(DGLDataset):
         g = dgl.from_networkx(nx_graph, idtype=torch.int32)
         # add attributes
         g.ndata["x"] = torch.zeros(g.num_nodes(), 2)
+        g.ndata["x"][0,0] = 1
         g.ndata["x"][1:,1] = self.data[i]["demand"]
         weights = np.array([nx_graph.edges[e]["weight"] for e in nx_graph.edges],
                            dtype=np.float32)
