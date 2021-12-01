@@ -17,7 +17,7 @@ from tqdm import tqdm
 from prob import VRPDGLDataset
 from solver import return2Depot
 
-def eval(size, distr):
+def eval(size, distr, rou_agent_type):
     """
     A function to evaluate different algorithms
 
@@ -39,13 +39,16 @@ def eval(size, distr):
     dataloader = GraphDataLoader(data, batch_size=batch, shuffle=False)
     # create table
     path = "./res/{}".format(distr)
-    file = "n{}-r2d.csv".format(size)
+    if rou_agent_type == "tsp":
+        file = "n{}-r2d-tsp.csv".format(size)
+    else:
+        file = "n{}-r2d.csv".format(size)
     if not os.path.isdir(path):
         os.mkdir(path)
     print("Save result to " + path + "/" + file)
     df = pd.DataFrame(columns=["Obj", "Routes", "Vehicles", "Elapsed"])
     # init solver
-    solver = return2Depot(size, distr, "vrp")
+    solver = return2Depot(size, distr, rou_agent_type)
     # solve
     print("\nEvaluating:")
     pbar = tqdm(dataloader)
@@ -86,6 +89,10 @@ if __name__ == "__main__":
                         type=str,
                         choices=["uniform", "cluster"],
                         help="data distribution")
+    parser.add_argument("--agent",
+                        type=str,
+                        choices=["tsp", "vrp"],
+                        help="route agent type")
     config = parser.parse_args()
     # run
-    eval(config.size, config.distr)
+    eval(config.size, config.distr, config.agent)
