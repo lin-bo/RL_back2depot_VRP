@@ -126,7 +126,7 @@ class returnState:
             mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
         else:
             demand = torch.cat((torch.zeros(self._batch,1, device=self.device), demand), axis=1)
-            mask = torch.logical_or(self.o.to(torch.bool), (demand > self.c)).reshape(self._batch, 1, -1)
+            mask = torch.logical_or(self.o.to(torch.bool), (demand > (self.c + 1e-4))).reshape(self._batch, 1, -1)
         #    depot_mask = torch.cat([torch.ones((self._batch, 1), dtype=torch.float32, device=self.device),
         #                            torch.zeros((self._batch, self._size), dtype=torch.float32, device=self.device)],
         #                           axis=1).reshape((self._batch, 1, -1))
