@@ -19,7 +19,7 @@ class returnState:
         w_feats (int): dimension of edge weight
     """
 
-    def __init__(self, batch_data, batch_graph, rou_name='tsp'):
+    def __init__(self, batch_data, batch_graph, rou_name="tsp"):
         self.device = "cpu"
         if torch.cuda.is_available():
             self.device = "cuda"
@@ -74,7 +74,7 @@ class returnState:
         # create one hot vectors
         one_hot = torch.zeros((self._size + 1, self._size + 1), device=self.device)
         one_hot = one_hot.scatter(0, torch.arange(0, self._size + 1, device=self.device).reshape(1, -1), 1)
-        if self.name == 'tsp':
+        if self.name == "tsp":
             # update current location
             new_state.v = ((next_nodes + 1) * (1 - action)).to(torch.int32).detach()
             # update capacity
@@ -103,7 +103,7 @@ class returnState:
 
     def _update_rou_state(self, rou_state, next_nodes, action_flag):
 
-        if self.name == 'tsp':
+        if self.name == "tsp":
             rou_state = rou_state.new_update(next_nodes.reshape((-1,)), action_flag.reshape((-1,)))
         else:
             rou_state = rou_state.update(next_nodes.reshape((-1,)))
@@ -120,11 +120,11 @@ class returnState:
         # make routing decision
         log_p, mask = rou_agent._get_log_p(rou_agent.fixed, rou_state)
         prob = log_p.exp()
-        if self.name == 'tsp':
+        if self.name == "tsp":
             # check if the demand at each node exceeds the remaining capacity or not, if so, should be masked
-            flag_demand = demand > (self.c + 1e-4)
-            mask = torch.minimum(mask + flag_demand.reshape((self._batch, 1, -1)), torch.tensor(1, device=self.device))
-            prob *= 1 - mask.to(torch.int32)
+            flag_demand = (demand > (self.c + 1e-4)).reshape(self._batch, 1, -1)
+            mask = torch.minimum(mask + flag_demand, torch.tensor(1, device=self.device))
+            prob *= 1 - mask.to(torch.float32)
         else:
             demand = torch.cat((torch.zeros(self._batch,1, device=self.device), demand), axis=1)
             mask = torch.logical_or(self.o.to(torch.bool), (demand > (self.c + 1e-4))).reshape(self._batch, 1, -1)

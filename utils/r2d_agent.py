@@ -93,7 +93,7 @@ class returnAgent:
                 qind[i, 0] = 1
         # capacity
         for i, g in enumerate(dgl.unbatch(state.g)):
-            if torch.all(torch.logical_or((state.c + 1e-4) < g.ndata["x"][1:,1], g.ndata["x"][1:,0])).item():
+            if torch.all(torch.logical_or((state.c[i] + 1e-4) < g.ndata["x"][1:,1], g.ndata["x"][1:,0])).item():
                 qind[i, 0] = 1
         # get value
         action = (qind - 0.5) * 2

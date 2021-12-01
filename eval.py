@@ -69,7 +69,7 @@ def eval(size, distr, rou_agent_type):
             loc = batch_data["loc"].cpu().detach().numpy()[i]
             demand = batch_data["demand"].cpu().detach().numpy()[i]
             # check valid
-            # assert checkValid(routes, depot, loc, demand), "Infeasible solution."
+            #assert checkValid(routes, depot, loc, demand), "Infeasible solution."
             routes_str = ";".join([",".join(map(str, r)) for r in routes])
             num_veh = len(routes)
             elpased = (tock - tick) / batch
