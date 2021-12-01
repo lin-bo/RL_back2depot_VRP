@@ -81,7 +81,6 @@ class returnAgent:
         q = torch.cat((q_n, q_r), 1)
         # max value
         qind = torch.argmax(q, dim=1).reshape(batch, 1)
-        print(qind)
         if explore:
             exp_flag = (torch.rand((batch, 1), device=self.device) <= self.epsilon).to(torch.int32)
             qind = exp_flag * (1 - qind) + (1 - exp_flag) * qind
