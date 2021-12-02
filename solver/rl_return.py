@@ -22,8 +22,9 @@ class return2Depot(ABSolver):
         rou_agent_type (str): type of routing agent
     """
 
-    def __init__(self, size, rou_agent_type):
+    def __init__(self, size, distr, rou_agent_type):
         self.size = size
+        self.distr = distr
         self.rou_agent_type = rou_agent_type
         # cuda
         self.device = "cpu"
@@ -34,8 +35,8 @@ class return2Depot(ABSolver):
         self.rou_agent = load_routing_agent(size=self.size, name=self.rou_agent_type)
         # initialize return agent
         print("\nLoading return2depot agent...")
-        self.re_agent = returnAgent(gnn_x_feat=2, gnn_w_feats=1, gnn_e_feats=64)
-        self.re_agent.loadModel("./pretrained/{}-{}.pkl".format(self.rou_agent_type, self.size))
+        self.re_agent = returnAgent(gnn_x_feat=4, gnn_w_feats=1, gnn_e_feats=64)
+        self.re_agent.loadModel("./pretrained/vrp-{}-{}.pkl".format(self.distr, self.size))
 
     def solve(self, data, graph):
         # init return state
@@ -50,6 +51,10 @@ class return2Depot(ABSolver):
             action = self.re_agent.actionDecode(re_state)
             # update state
             re_state, rou_state = re_state.update(action, self.rou_agent, rou_state, data)
+            #print("action:", action[0].item())
+            #print("reward:", re_state.r[0].item())
+            #print("node:", re_state.v[0].item())
+            #print()
             batch_routes = torch.cat((batch_routes, re_state.v), axis=1)
         batch_routes = self._covertRoutes(batch_routes)
         batch_objs = self._calObjs(batch_routes, data)

@@ -103,7 +103,7 @@ class structure2Vec(nn.Module):
     def _aggf(self, graph, feat):
         with graph.local_scope():
             graph.ndata["h"] = feat
-            graph.update_all(fn.copy_u("h", "m"), fn.sum("m", "h_new"))
+            graph.update_all(copy_v, fn.sum("m", "h_new"))
             h = graph.ndata["h_new"]
             return self._ffc(h)
 

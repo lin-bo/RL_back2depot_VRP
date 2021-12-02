@@ -49,7 +49,7 @@ def train(size, rou_agent_type="vrp", distr="uniform", step=1, lr=1e-4, batch=64
     rou_agent = load_routing_agent(size=size, name=rou_agent_type)
     # initialize return agent
     print("\nLoading return2depot agent...")
-    re_agent = returnAgent(gnn_x_feat=2,
+    re_agent = returnAgent(gnn_x_feat=4,
                            gnn_w_feats=1,
                            gnn_e_feats=64,
                            gamma=0.99,

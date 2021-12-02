@@ -150,9 +150,16 @@ class VRPDGLDataset(DGLDataset):
         # build dgl graph
         g = dgl.from_networkx(nx_graph, idtype=torch.int32)
         # add attributes
-        g.ndata["x"] = torch.zeros(g.num_nodes(), 2)
+        g.ndata["x"] = torch.zeros(g.num_nodes(), 4)
+        # visited
         g.ndata["x"][0,0] = 1
+        # demand
         g.ndata["x"][1:,1] = self.data[i]["demand"]
+        # relative location
+        loc = self.data[i]["loc"] - self.data[i]["depot"]
+        g.ndata["x"][1:,2] = loc[:,0].detach()
+        g.ndata["x"][1:,3] = loc[:,1].detach()
+        # distance
         weights = np.array([nx_graph.edges[e]["weight"] for e in nx_graph.edges],
                            dtype=np.float32)
         g.edata["w"] = torch.from_numpy(weights)
