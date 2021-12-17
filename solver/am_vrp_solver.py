@@ -27,7 +27,7 @@ class amVRP:
         if self.method == "greedy":
             batch_rep, iter_rep = 1, 1
         else:
-            batch_rep, iter_rep = 50, 1
+            batch_rep, iter_rep = 1280, 1
         routes, costs = self.solver.sample_many(batch_data, batch_rep=batch_rep, iter_rep=iter_rep)
         routes = self._covertRoutes(routes)
         return routes, costs.detach().cpu().tolist()
