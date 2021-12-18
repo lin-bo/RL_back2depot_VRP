@@ -11,4 +11,5 @@ This is the codebase of an ongoing research project on using reinforcement learn
  - solver: baseline VRP solvers
  - utils: utility functions
  
- 
+ ## References
+ Kool, W., Van Hoof, H. and Welling, M., 2018. Attention, learn to solve routing problems!. arXiv preprint arXiv:1803.08475.
