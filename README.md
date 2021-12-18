@@ -10,6 +10,29 @@ This is the codebase of an ongoing research project on using reinforcement learn
  - res: experimental results
  - solver: baseline VRP solvers
  - utils: utility functions
+
+## Train
+```bash
+$ python train.py --size 20 --distr uniform
+```
+ - size: number of nodes
+ - distr: node distribution (uniform or cluster)
+
+## Eval
+```bash
+$ python eval.py --size 50 --distr cluster
+```
+ - size: number of nodes
+ - distr: node distribution (uniform or cluster)
+
+## Baseline
+```bash
+$ python eval_baseline.py --size 100 --distr cluster --algo cw --arg 5 5
+```
+ - size: number of nodes
+ - distr: node distribution (uniform or cluster)
+ - algo: baseline algorithm
+ - args: args for algorithm
  
- ## References
- Kool, W., Van Hoof, H. and Welling, M., 2018. Attention, learn to solve routing problems!. arXiv preprint arXiv:1803.08475.
+## References
+Kool, W., Van Hoof, H. and Welling, M., 2018. Attention, learn to solve routing problems!. arXiv preprint arXiv:1803.08475.
